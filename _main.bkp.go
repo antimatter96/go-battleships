@@ -27,40 +27,9 @@ type websocketMessage struct {
 }
 
 var port = flag.String("port", "8080", "http service address")
-var shortnerTemplate *template.Template
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-type shipDesc struct {
-	St   string
-	Name string
-}
-
-type templateStruct struct {
-	Letters []byte
-	Numbers []int
-	Names   []shipDesc
-}
-
-var ts = templateStruct{
-	Letters: []byte{'/', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'},
-	Numbers: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Names: []shipDesc{
-		{"A", "Carrier (5)"},
-		{"B", "Submarine (4)"},
-		{"C", "Destroyer (3)"},
-		{"D", "Cruiser (3)"},
-		{"E", "Patrol (2)"},
-	},
-}
-
 var connOf map[string]*websocket.Conn
-
-func decInt(i int, by int) string {
-	return fmt.Sprintf("%d", i-by)
-}
-func incInt(i int, by int) string {
-	return fmt.Sprintf("%d", i+by)
-}
 
 var st map[string]*websocket.Conn
 var allocator *game.Allocator
