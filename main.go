@@ -1,34 +1,129 @@
 package main
 
 import (
-	"bytes"
-	"flag"
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-
-	"github.com/gorilla/websocket"
-
-	"github.com/antimatter96/go-battleships/game"
+	"github.com/dgrijalva/jwt-go"
+	socketio "github.com/googollee/go-socket.io"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+type MyCustomClaims struct {
+	Foo string `json:"foo"`
+	ID  string `json:"id"`
+	jwt.StandardClaims
 }
 
-type websocketMessage struct {
-	Command string                 `json:"command"`
-	Data    map[string]interface{} `json:"data,omitempty"`
+func main() {
+
+	privateKeyPEM, err := ioutil.ReadFile("./private_key.pem")
+
+	ss := Server{key: privateKeyPEM}
+	//_privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
+	// //fmt.Println(privateKey)
+
+	// tokenString, err := token.SignedString(privateKeyPEM)
+
+	// fmt.Println(">>", tokenString, "<<", err)
+
+	// token2, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+	// 	return privateKeyPEM, nil
+	// })
+
+	// if claims, ok := token2.Claims.(*MyCustomClaims); ok && token2.Valid {
+	// 	fmt.Printf("%+v\n", claims)
+	// } else {
+	// 	fmt.Println(err)
+	// }
+
+	// if token2.Valid {
+	// 	fmt.Println(token2.Claims)
+	// } else if ve, ok := err.(*jwt.ValidationError); ok {
+	// 	if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+	// 		fmt.Println("That's not even a token")
+	// 	} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+	// 		// Token is either expired or not active yet
+	// 		fmt.Println("Timing is everything")
+	// 	} else {
+	// 		fmt.Println("Couldn't handle this token:", err)
+	// 	}
+	// } else {
+	// 	fmt.Println("Couldn't handle this token:", err)
+	// }
+
+	server, err := socketio.NewServer(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	server.OnConnect("/", func(s socketio.Conn) error {
+		s.SetContext("")
+		fmt.Println("connected:", s.ID())
+		return nil
+	})
+
+	server.OnEvent("/", "notice", func(s socketio.Conn, msg string) {
+		fmt.Println("notice:", msg)
+		s.Emit("reply", "have "+msg)
+	})
+
+	server.OnEvent("/", "updateSocket", func(s socketio.Conn, msg string) {
+		fmt.Println("notice:", msg)
+		s.Emit("reply", "have "+msg)
+	})
+
+	server.OnEvent("/", "join", func(s socketio.Conn, msg string) {
+		fmt.Println("notice:", msg)
+		s.Emit("reply", "have "+msg)
+	})
+
+	server.OnEvent("/", "addUser", ss.addUserHandler)
+
+	server.OnEvent("/chat", "msg", func(s socketio.Conn, msg string) string {
+		s.SetContext(msg)
+		return "recv " + msg
+	})
+
+	server.OnEvent("/", "bye", func(s socketio.Conn) string {
+		last := s.Context().(string)
+		s.Emit("bye", last)
+		s.Close()
+		return last
+	})
+
+	server.OnError("/", func(s socketio.Conn, e error) {
+		fmt.Println("meet error:", e)
+	})
+
+	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
+		fmt.Println("closed", reason)
+	})
+
+	createFrontpage()
+
+	go server.Serve()
+	defer server.Close()
+
+	http.Handle("/socket.io/", server)
+
+	http.Handle("/", http.FileServer(http.Dir("./static")))
+	log.Println("Serving at localhost:8000...")
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
-var port = flag.String("port", "8080", "http service address")
-var shortnerTemplate *template.Template
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+func decInt(i int, by int) string {
+	return fmt.Sprintf("%d", i-by)
+}
+func incInt(i int, by int) string {
+	return fmt.Sprintf("%d", i+by)
+}
 
 type shipDesc struct {
 	St   string
@@ -53,161 +148,75 @@ var ts = templateStruct{
 	},
 }
 
-var connOf map[string]*websocket.Conn
-
-func decInt(i int, by int) string {
-	return fmt.Sprintf("%d", i-by)
-}
-func incInt(i int, by int) string {
-	return fmt.Sprintf("%d", i+by)
-}
-
-var st map[string]*websocket.Conn
-var allocator *game.Allocator
-
-func main() {
-	allocator = game.NewAllocator()
-	connOf = make(map[string]*websocket.Conn)
-
-	x, err := game.NewBattleShips("asd", "asd")
-	fmt.Println(x, err)
+func createFrontpage() {
+	fmt.Println("Creating file")
 	var fm = template.FuncMap{
 		"decInt": decInt,
 		"incInt": incInt,
 	}
-	shortnerTemplate = template.Must(template.New("index.html").Funcs(fm).ParseFiles("./index.html"))
 
-	flag.Parse()
+	shortnerTemplate := template.Must(template.New("index.html").Funcs(fm).ParseFiles("./index.html"))
 
-	if (*port)[0] != ':' {
-		*port = ":" + *port
-	}
-	fmt.Println("starting at", *port)
-
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
-	http.HandleFunc("/ws", handleWebSocket)
-
-	http.HandleFunc("/", serveHome)
-	err = http.ListenAndServe(*port, nil)
+	fo, err := os.Create("static/index.html")
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		panic(err)
 	}
-}
 
-func serveHome(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		log.Println(r.URL)
-		http.Error(w, "Not found", http.StatusNotFound)
-		return
-	}
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+	defer func() {
+		if err := fo.Close(); err != nil {
+			panic(err)
+		}
+	}()
+	w := bufio.NewWriter(fo)
+
 	shortnerTemplate.Execute(w, ts)
+
+	if err = w.Flush(); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("File created")
 }
 
-type daddyWebSocket struct {
-	*websocket.Conn
-	username string
+type Server struct {
+	key []byte
+
+	//addUserHandler func()
 }
 
-func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Handling")
+func (server *Server) addUserHandler(s socketio.Conn, msg string) {
+	fmt.Println("addUser", msg)
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	var dat map[string]interface{}
+	if err := json.Unmarshal([]byte(msg), &dat); err != nil {
+		panic(err)
+	}
+
+	name := dat["name"].(string)
+	fmt.Println(dat)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"name": name,
+		"nbf":  time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+		"exp":  time.Now().Unix() + 36000,
+	})
+	tokenString, err := token.SignedString(server.key)
+
 	if err != nil {
-		fmt.Println(err, "error")
-		http.Error(w, "some error", http.StatusInternalServerError)
-		return
+		log.Fatal(err)
 	}
 
-	for {
-		_, message, err := conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				fmt.Printf("IsUnexpectedCloseError error: %v\n", err)
-			} else {
-				fmt.Printf("error: %v\n", err)
-			}
-			break
-		}
-
-		conn.SetCloseHandler(func(a int, v string) error {
-			fmt.Println(a, v, message)
-			return nil
-		})
-
-		message = bytes.TrimSpace(bytes.Replace(message, []byte{'\n'}, []byte{' '}, -1))
-		var received websocketMessage
-		err = json.Unmarshal(message, &received)
-
-		fmt.Println("data =>", received, err)
-
-		switch received.Command {
-		case "addUser":
-			fmt.Println("AddUser")
-			fmt.Println("name =>", received.Data["name"])
-			x := websocketMessage{"userAdded", map[string]interface{}{
-				"status":   "OK",
-				"username": received.Data["name"],
-			}}
-			yy, _ := json.Marshal(x)
-			fmt.Println("marshalled => ", yy)
-			err := writeToSocket(conn, yy)
-			fmt.Println("writeToSocket err", err)
-			userName, _ := received.Data["name"].(string)
-			connOf[userName] = conn
-		case "join":
-			userName, _ := received.Data["name"].(string)
-			connOf[userName] = conn
-			output := make(chan string)
-			allocator.Find(userName, output)
-			timedOut := time.NewTimer(30 * time.Second)
-			select {
-			case <-timedOut.C:
-				fmt.Println("Shit is over")
-				allocator.IDontNeedAnyMore(userName)
-				otherPlayer := <-output
-				if otherPlayer == "" {
-					fmt.Println("Other Player Not Found")
-				} else {
-					fmt.Println(otherPlayer, "NONONONON")
-				}
-			case otherPLayer := <-output:
-				var err error
-				err = writeToSocket(connOf[otherPLayer], []byte("AsAS"))
-				fmt.Println(err)
-				err = writeToSocket(conn, []byte("AsAS"))
-				fmt.Println(err)
-			}
-			fmt.Println("connOf", connOf)
-			fmt.Println("data.Data", received.Data)
-		default:
-			fmt.Println("Asd")
-		}
+	m := map[string]string{
+		"msg":       "OK",
+		"name":      name,
+		"userToken": tokenString,
 	}
-
-	fmt.Println("exiting loop")
-
-}
-
-func writeToSocket(conn *websocket.Conn, message []byte) error {
-	conn.SetWriteDeadline(time.Now().Add(10 * time.Millisecond))
-
-	w, err := conn.NextWriter(websocket.TextMessage)
+	b, err := json.Marshal(m)
 	if err != nil {
-		return err
-	}
-	w.Write(message)
-
-	if err := w.Close(); err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	return nil
-}
+	fmt.Println(string(b))
 
-func closeSocket(conn *websocket.Conn) {
-	conn.WriteMessage(websocket.CloseMessage, []byte{})
+	s.Emit("userAdded", string(b))
 }

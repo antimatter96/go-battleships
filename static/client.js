@@ -1,41 +1,25 @@
 $(document).ready(function () {
 
-  const lengthOfType = { A: 5, B: 4, C: 3, D: 3, E: 2 };
-  const arrOfI = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-  const arrOfJ = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-
-  var hostname = window.location.hostname;
+  let hostname = window.location.hostname;
   if (hostname === "localhost") {
-    hostname = "localhost" + ":" + window.location.port;
+    hostname += ":" + window.location.port;
   }
 
-  var socket = new WebSocket("ws://" + hostname + "/ws");
+  // eslint-disable-next-line no-undef
+  let socket = io.connect(hostname);
+  let orginal = socket.emit.bind(socket);
 
-  socket.emit = function() {};
-  socket.onmessage = function(event) {
-    let message = undefined;
-    console.log(event.data);
-    try {
-      message = JSON.parse(event.data);
-    } catch(e) {
-      console.log(e);
-      return;
+  socket.emit = function(msg, data) {
+    if (data != undefined) {
+      data.userToken = userToken;
+      data.gameToken = gameToken;
+      orginal(msg, JSON.stringify(data));
+    } else {
+      orginal(msg);
     }
-
-    console.log(message);
-    if (!message) {
-      return;
-    }
-
-    switch(message.command) {
-      case "userAdded":
-        userAdded(message.data);
-        break;
-    }
-
   };
 
-  var username = 'Not Choosen';
+  let username = 'Not Choosen';
 
   $('#globalLoading').hide();
   $('#namePrompt').hide();
@@ -43,6 +27,10 @@ $(document).ready(function () {
   $('#choosePlacement').hide();
   $('#board').hide();
   $('#gameOver').hide();
+
+  let userToken = window.localStorage.getItem('userToken');
+  let gameToken = window.localStorage.getItem('gameToken');
+  let gameId = null;
 
   function deleteElement(id) {
     let toDelete = document.getElementById(id);
@@ -52,20 +40,30 @@ $(document).ready(function () {
 
   //===== NAME
 
-  var send = sender(socket);
-
   if (window.localStorage.getItem('username')) {
     username = window.localStorage.getItem('username');
-    send( JSON.stringify( {command: 'updateSocket', data: { player: username } }));
-    deleteElement('namePrompt');
-    $('#joinGame').show();
-  }
-  else {
+    socket.emit('updateSocket', { player: username });
+  } else {
     $('#namePrompt').show();
     $('#errorName').text('.');
   }
 
-  var lockName = false;
+  socket.on('updateFailed', function (_data) {
+    username = null;
+    userToken = null;
+    window.localStorage.removeItem("userToken");
+    window.localStorage.removeItem("username");
+    $('#namePrompt').show();
+    $('#errorName').text('.');
+  });
+
+  socket.on('updateSuccess', function (_data) {
+    deleteElement('namePrompt');
+    $('#joinGame').show();
+  });
+
+
+  let lockName = false;
 
   $('#btnSubmitName').on('click', function () {
     $('#errorName').text('.');
@@ -73,35 +71,42 @@ $(document).ready(function () {
       $('#errorName').text("Please Wait");
       return;
     }
-    let result = validateName($('#inptName').val());
+    username = $('#inptName').val();
+    let result = validateName(username);
     if (result != 'OK') {
       $('#errorName').text(result);
       return;
     }
     lockName = true;
-    socket.send( JSON.stringify( {command: 'addUser', data: { name: $('#inptName').val() }} ));
+    socket.emit('addUser', { name: username });
     $('#globalLoading').show();
   });
 
-  function userAdded (data) {
+  socket.on('userAdded', function (data) {
+    data = JSON.parse(data);
+    console.log("userAdded", data);
     $('#globalLoading').hide();
-    if (data.status != 'OK') {
+    console.log("userAdded", data.msg);
+    if (data.msg != 'OK') {
+      username = null;
       lockName = false;
       $('#errorName').text(data.msg);
       return;
     }
-    username = data.username;
     deleteElement('namePrompt');
     $('#joinGame').show();
     window.localStorage.setItem('username', data.name);
-  }
+    window.localStorage.setItem('userToken', data.userToken);
+
+    userToken = data.userToken;
+  });
 
   function validateName(name) {
     if (name.length < 5) {
       return "Too Short. Minimum 5 characters";
     }
-    if (name.length > 25) {
-      return "Too Long. Maximum 25 characters";
+    if (name.length > 255) {
+      return "Too Long. Maximum 255 characters";
     }
     if (/^\w+$/.test(name)) {
       return "OK";
@@ -111,7 +116,7 @@ $(document).ready(function () {
 
   //========= JOIN
 
-  var lockJoin = false;
+  let lockJoin = false;
 
   $('#btnJoin').click(function () {
     $('#errorJoin').text('.');
@@ -120,27 +125,31 @@ $(document).ready(function () {
       return;
     }
     lockJoin = true;
-    socket.send( JSON.stringify({ command:'join', data:{ player: username } }));
+    socket.emit('join', { player: username });
     $('#globalLoading').show();
   });
 
-  function lockJoin(data) {
+  socket.on('lockJoin', function (_data) {
     $('#errorJoin').text('Wait');
     lockJoin = true;
-  }
+  });
 
-  function startGame(data) {
+  socket.on('startGame', function (data) {
     lockJoin = false;
     deleteElement('joinGame');
     $('#globalLoading').hide();
     $('#choosePlacement').show();
     console.log('Player2 is' + data.otherPlayer);
-  }
+
+    window.localStorage.setItem('gameToken', data.gameToken);
+    gameToken = data.gameToken;
+    gameId = data.gameId;
+  });
 
   //========== BOARD INITIALIZATION
 
-  var lockReady = false;
-  var boardValid = false;
+  let lockReady = false;
+  let boardValid = false;
 
   $('#btnReady').click(function () {
     $('#errorReady').text('.');
@@ -161,7 +170,7 @@ $(document).ready(function () {
       locked[shipType] = true;
     }
     let toSend = makeToSend();
-    socket.send( JSON.stringify({ command:'boardMade', data: { player: username, shipPlacement: toSend }}));
+    socket.emit('boardMade', { player: username, shipPlacement: toSend, gameId: gameId });
   });
 
   function makeToSend() {
@@ -203,13 +212,16 @@ $(document).ready(function () {
     return true;
   }
 
+  let lengthOfType = { A: 5, B: 4, C: 3, D: 3, E: 2 };
+  let arrOfI = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+  let arrOfJ = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+
   function addShipClass(type, i, j, horizontal) {
     if (horizontal) {
       for (let y = j; y < j + lengthOfType[type]; y++) {
         $('#cell-' + i + y).addClass('ship' + type);
       }
-    }
-    else {
+    } else {
       for (let x = i; x < i + lengthOfType[type]; x++) {
         $('#cell-' + x + j).addClass('ship' + type);
       }
@@ -222,7 +234,7 @@ $(document).ready(function () {
     playerBoard[i] = (new Array(10)).fill(0);
   }
 
-  var pointsOfShip = {
+  let pointsOfShip = {
     A: new Set(),
     B: new Set(),
     C: new Set(),
@@ -230,9 +242,9 @@ $(document).ready(function () {
     E: new Set(),
   };
 
-  var hor = { A: false, B: false, C: false, D: false, E: false };
-  var placedBefore = { A: false, B: false, C: false, D: false, E: false };
-  var locked = { A: false, B: false, C: false, D: false, E: false };
+  let hor = { A: false, B: false, C: false, D: false, E: false };
+  let placedBefore = { A: false, B: false, C: false, D: false, E: false };
+  let locked = { A: false, B: false, C: false, D: false, E: false };
 
   function addPointsToShip(type, i, j, horizontal) {
     let points = pointsOfShip[type];
@@ -241,8 +253,7 @@ $(document).ready(function () {
       for (let y = j; y < j + lengthOfType[type]; y++) {
         points.add(JSON.stringify({ 'x': i, 'y': y }));
       }
-    }
-    else {
+    } else {
       for (let x = i; x < i + lengthOfType[type]; x++) {
         points.add(JSON.stringify({ 'x': x, 'y': j }));
       }
@@ -258,8 +269,7 @@ $(document).ready(function () {
       if (points) {
         points = JSON.parse(points);
         $('#cell-' + points.x + points.y).removeClass('ship' + type);
-      }
-      else {
+      } else {
         break;
       }
     }
@@ -286,18 +296,15 @@ $(document).ready(function () {
             placedBefore[ship] = true;
             addPointsToShip(ship, arrOfI.indexOf(valI), arrOfJ.indexOf(valJ), hor[ship]);
             addShipClass(ship, arrOfI.indexOf(valI), arrOfJ.indexOf(valJ), hor[ship]);
-          }
-          else {
+          } else {
             classInverser(ship, true);
             $('#errorPlaceShip' + ship).text("Overlapping Ships");
           }
-        }
-        else {
+        } else {
           classInverser(ship, true);
           $('#errorPlaceShip' + ship).text("Out of bounds");
         }
-      }
-      else {
+      } else {
         classInverser(ship, true);
         $('#errorPlaceShip' + ship).text("Inavlid Entries");
       }
@@ -309,8 +316,7 @@ $(document).ready(function () {
       if (arrOfJ.indexOf(valJ) + lengthOfType[ship] > 10) {
         return false;
       }
-    }
-    else {
+    } else {
       if (arrOfI.indexOf(valI) + lengthOfType[ship] > 10) {
         return false;
       }
@@ -326,8 +332,7 @@ $(document).ready(function () {
       for (let y = j; y < j + lengthOfType[ship]; y++) {
         tempPoints.add(JSON.stringify({ 'x': i, 'y': y }));
       }
-    }
-    else {
+    } else {
       for (let x = i; x < i + lengthOfType[ship]; x++) {
         tempPoints.add(JSON.stringify({ 'x': x, 'y': j }));
       }
@@ -382,27 +387,21 @@ $(document).ready(function () {
       this.classList.remove('btn-primary');
       this.classList.add('btn-danger');
       locked[ship] = true;
-    }
-    else {
+    } else {
       classInverser(ship, true);
       $('#errorPlaceShip' + ship).text("Please Place before locking");
     }
   });
 
   function classInverser(ship, errorOn) {
-    let classToAdd = "label-default";
-    let classToRemove = "label-danger";
-
-    if (errorOn) {
-      classToAdd = "label-danger";
-      classToRemove = "label-default";
-    }
+    let classToAdd = errorOn ? "label-danger" : "label-default";
+    let classToRemove = errorOn ? "label-default" : "label-danger";
 
     $('#errorPlaceShip' + ship).removeClass(classToRemove);
     $('#errorPlaceShip' + ship).addClass(classToAdd);
   }
 
-  function wait(data) {
+  socket.on('wait', function (data) {
     if (data.status === "Error") {
       $('#errorReady').text(data.msg);
       return;
@@ -411,7 +410,7 @@ $(document).ready(function () {
     cloneAndAppend();
     deleteElement('choosePlacement');
     $('#board').show();
-  }
+  });
 
   function cloneAndAppend() {
     let toClone = document.getElementById("chooseBoard");
@@ -435,12 +434,12 @@ $(document).ready(function () {
     }
   }
 
-  //var se = setInterval(function(){console.log(pointsOfShip);},2000);
+  //let se = setInterval(function(){console.log(pointsOfShip);},2000);
 
   //=========== GAMEPLAY
 
-  var myShips = {};
-  var oppShips = {
+  let myShips = {};
+  let oppShips = {
     A: new Set(),
     B: new Set(),
     C: new Set(),
@@ -454,11 +453,11 @@ $(document).ready(function () {
     otherPlayerBoard[i] = (new Array(10)).fill(0);
   }
 
-  var myTurn = false;
+  let myTurn = false;
 
-  var lastMove = {};
+  let lastMove = {};
 
-  function go(data) {
+  socket.on('go', function (data) {
     if (data.start) {
       $('#globalLoading').hide();
       myTurn = true;
@@ -469,7 +468,7 @@ $(document).ready(function () {
       }
       myShips[shipType] = new Set(pointsOfShip[shipType]);
     }
-  }
+  });
 
   $('#btnShoot').click(function () {
     if (myTurn) {
@@ -482,38 +481,32 @@ $(document).ready(function () {
         x = arrOfI.indexOf(x);
         if (otherPlayerBoard[x][y] === 0) {
           $('#globalLoading').show();
-          socket.send( JSON.stringify({ command: 'makeMove', data: { player: username, move: { x: x, y: y } }}));
+          socket.emit('makeMove', { player: username, move: { x: x, y: y }, gameId: gameId });
           lastMove.x = x;
           lastMove.y = y;
-        }
-        else {
+        } else {
           classInverserShoot(true);
           $('#errorShoot').text("Already");
         }
-      }
-      else {
+      } else {
         classInverserShoot(true);
         $('#errorShoot').text("Invlid Entry");
       }
-    }
-    else {
+    } else {
       classInverserShoot(true);
       $('#errorShoot').text("Please Wait For Your turn");
     }
   });
 
   function classInverserShoot(errorOn) {
-    if (errorOn) {
-      $('#errorShoot').addClass("label-danger");
-      $('#errorShoot').removeClass("label-default");
-    }
-    else {
-      $('#errorShoot').removeClass("label-danger");
-      $('#errorShoot').addClass("label-default");
-    }
+    let classToAdd = errorOn ? "label-danger" : "label-default";
+    let classToRemove = errorOn ? "label-default" : "label-danger";
+
+    $('#errorShoot').addClass(classToAdd);
+    $('#errorShoot').removeClass(classToRemove);
   }
 
-  function yourMove(data) {
+  socket.on('yourMove', function (data) {
     if (data.result === "Hit") {
       myTurn = !myTurn;
       otherPlayerBoard[lastMove.x][lastMove.y] = 1;
@@ -523,42 +516,35 @@ $(document).ready(function () {
         markShipDown(data.extra.partOf);
         if (data.extra.gameOver) {
           //
-          deleteElement('board');
-          $('#gameOver').show();
-          $('#gameOverLose').hide();
+          endGame(false);
         }
       }
-    }
-    else if (data.result === "Miss") {
+    } else if (data.result === "Miss") {
       myTurn = !myTurn;
       otherPlayerBoard[lastMove.x][lastMove.y] = -1;
       $('#opp-cell-' + lastMove.x + lastMove.y).addClass("miss");
-    }
-    else {
+    } else {
       $('#errorShoot').text("Repeat");
     }
-  }
+  });
 
-  function oppMove(data) {
+  socket.on('oppMove', function (data) {
     switch (data.result) {
-      case "Hit":
-        myTurn = !myTurn;
-        $('#cell-' + data.point.x + data.point.y).addClass("hit");
-        if (data.extra.gameOver) {
-          //
-          deleteElement('board');
-          $('#globalLoading').hide();
-          $('#gameOver').show();
-          $('#gameOverWin').hide();
-        }
-        break;
-      case "Miss":
-        myTurn = !myTurn;
-        $('#cell-' + data.point.x + data.point.y).addClass("miss");
-        break;
+    case "Hit":
+      myTurn = !myTurn;
+      $('#cell-' + data.point.x + data.point.y).addClass("hit");
+      if (data.extra.gameOver) {
+        //
+        endGame(true);
+      }
+      break;
+    case "Miss":
+      myTurn = !myTurn;
+      $('#cell-' + data.point.x + data.point.y).addClass("miss");
+      break;
     }
     $('#globalLoading').hide();
-  }
+  });
 
   function markShipDown(type) {
     let points = oppShips[type];
@@ -569,10 +555,25 @@ $(document).ready(function () {
       if (points) {
         points = JSON.parse(points);
         $('#opp-cell-' + points.x + points.y).addClass('ship' + type);
-      }
-      else {
+      } else {
         break;
       }
+    }
+  }
+
+  function endGame(lost) {
+    gameToken = null;
+    gameId = null;
+    window.localStorage.removeItem("gameToken");
+
+    deleteElement('board');
+    $('#globalLoading').hide();
+    $('#gameOver').show();
+
+    if (lost) {
+      $('#gameOverWin').hide();
+    } else {
+      $('#gameOverLose').hide();
     }
   }
 
@@ -598,25 +599,6 @@ $(document).ready(function () {
     }
   }
 
-  let changeColorInterval = setInterval(changeColors, 1500);
-
-  function sender(socket) {
-    let arr = [];
-
-    function send(data) {
-      for(let i = 0; i < arr.length; i++) {
-        socket.send(arr[i]);
-      }
-      socket.send(data);
-    }
-
-    return function(data) {
-      if (socket.readyState != 1) {
-        arr.push(data);
-      } else {
-        send(data);
-      }
-    };
-  }
+  let _changeColorInterval = setInterval(changeColors, 1500);
 
 });
