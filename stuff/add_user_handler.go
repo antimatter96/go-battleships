@@ -10,6 +10,7 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 )
 
+// AddUserHandler is
 func (server *Server) AddUserHandler(s socketio.Conn, msg string) {
 	fmt.Println("AddUserHandler", msg)
 
@@ -54,4 +55,5 @@ func (server *Server) AddUserHandler(s socketio.Conn, msg string) {
 	s.SetContext(name)
 
 	server.present[name] = true
+	server.socketOf[name] = &s
 }

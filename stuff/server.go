@@ -2,6 +2,7 @@ package stuff
 
 import (
 	"fmt"
+	"time"
 
 	socketio "github.com/googollee/go-socket.io"
 )
@@ -9,14 +10,34 @@ import (
 type Server struct {
 	Key []byte
 
-	Server  *socketio.Server
-	present map[string]bool
+	Server   *socketio.Server
+	present  map[string]bool
+	socketOf map[string]*socketio.Conn
 	//addUserHandler func()
 }
 
 func (server *Server) Init() {
 
 	server.present = make(map[string]bool)
+	server.socketOf = make(map[string]*socketio.Conn)
+
+	ticker := time.NewTicker(5 * time.Second)
+	quit := make(chan struct{})
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				for x, y := range server.socketOf {
+					fmt.Println(x, (*y).Context())
+				}
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+
+	}()
 
 	server.Server.OnConnect("/", func(s socketio.Conn) error {
 		s.SetContext("")

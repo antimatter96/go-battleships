@@ -1,7 +1,9 @@
 package stuff
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 
 	socketio "github.com/googollee/go-socket.io"
 )
@@ -9,6 +11,22 @@ import (
 func (server *Server) JoinGameHandler(s socketio.Conn, msg string) {
 	fmt.Println("JoinGameHandler:", msg)
 	fmt.Println("The player is", s.Context())
+
+	var dat map[string]string
+	if err := json.Unmarshal([]byte(msg), &dat); err != nil {
+		panic(err)
+	}
+	fmt.Println(dat)
+
+	m := make(map[string]string)
+	defer func() {
+		fmt.Println(">>", m, "<<")
+		b, err := json.Marshal(m)
+		if err != nil {
+			log.Fatal(err)
+		}
+		s.Emit("userAdded", string(b))
+	}()
 
 	// fmt.Println("notice:", msg)
 	// s.Emit("reply", "have "+msg)
@@ -47,9 +65,4 @@ func (server *Server) JoinGameHandler(s socketio.Conn, msg string) {
 	// fmt.Println(string(b))
 
 	// s.Emit("userAdded", string(b))
-}
-
-func (server *Server) DisconnectHandler(s socketio.Conn, msg string) {
-	fmt.Println("DisconnectHandler", msg, s.Context())
-
 }

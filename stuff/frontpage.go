@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"text/template"
+
+	"github.com/rs/zerolog/log"
 )
 
 func decInt(i int, by int) string {
@@ -39,7 +41,8 @@ var ts = templateStruct{
 
 // CreateFrontpage is
 func CreateFrontpage() {
-	fmt.Println("Creating file")
+	log.Debug().Msg("Creating file")
+
 	var fm = template.FuncMap{
 		"decInt": decInt,
 		"incInt": incInt,
@@ -65,5 +68,5 @@ func CreateFrontpage() {
 		panic(err)
 	}
 
-	fmt.Println("File created")
+	log.Debug().Msg("File created")
 }
