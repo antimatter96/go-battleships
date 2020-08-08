@@ -2,6 +2,7 @@ package stuff
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	socketio "github.com/googollee/go-socket.io"
@@ -13,6 +14,11 @@ type Server struct {
 	Server   *socketio.Server
 	present  map[string]bool
 	socketOf map[string]*socketio.Conn
+
+	queueLock sync.Mutex
+	Queue     []string
+
+	playerIsIn map[string]string
 	//addUserHandler func()
 }
 
@@ -21,6 +27,8 @@ func (server *Server) Init() {
 	server.present = make(map[string]bool)
 	server.socketOf = make(map[string]*socketio.Conn)
 
+	server.Queue = make([]string, 0)
+
 	ticker := time.NewTicker(5 * time.Second)
 	quit := make(chan struct{})
 
@@ -28,11 +36,29 @@ func (server *Server) Init() {
 		for {
 			select {
 			case <-ticker.C:
-				for x, y := range server.socketOf {
-					fmt.Println(x, (*y).Context())
-				}
+				// for , y := range server.socketOf {
+				// 	fmt.Println(x, (*y).Context())
+				// }
 			case <-quit:
 				ticker.Stop()
+				return
+			}
+		}
+
+	}()
+
+	ticker2 := time.NewTicker(5 * time.Second)
+	quit2 := make(chan struct{})
+
+	go func() {
+		for {
+			select {
+			case <-ticker2.C:
+				for _, k := range server.Queue {
+					fmt.Println(k)
+				}
+			case <-quit2:
+				ticker2.Stop()
 				return
 			}
 		}
@@ -47,8 +73,8 @@ func (server *Server) Init() {
 
 	server.Server.OnEvent("/", "updateSocket", server.JoinGameHandler)
 
-	server.Server.OnEvent("/", "boardMade", server.JoinGameHandler)
-	server.Server.OnEvent("/", "makeMove", server.JoinGameHandler)
+	server.Server.OnEvent("/", "boardMade", server.DisconnectHandler)
+	server.Server.OnEvent("/", "makeMove", server.DisconnectHandler)
 
 	server.Server.OnEvent("/", "join", server.JoinGameHandler)
 	server.Server.OnEvent("/", "addUser", server.AddUserHandler)
