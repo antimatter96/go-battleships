@@ -6,48 +6,15 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	socketio "github.com/googollee/go-socket.io"
 )
 
-/*
-  5 ships
-
-  shipA = 5
-  shipB = 4
-  shipC = 3
-  shipD = 3
-  shipE = 2
-*/
-
-type Player struct {
-	conn *socketio.Conn
-	name string
-}
-
-// Command has the text command and the json stuff
-type Command struct {
-	commandType string
-	data        map[string]string
-}
-
-const (
-	shipACode = iota
-	shipBCode
-	shipCCode
-	shipDCode
-	shipECode
-)
-
-var lengthOfType map[string]int = map[string]int{
+var lengthOfType = map[string]int{
 	"A": 5,
 	"B": 4,
 	"C": 3,
 	"D": 3,
 	"E": 2,
 }
-
-var arrOfI = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
-var arrOfJ = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
 
 type BattleShips struct {
 	sync.Mutex
@@ -66,20 +33,6 @@ type BattleShips struct {
 	p2Ship map[string]*StringSet
 
 	turnOf string
-}
-
-// Game is
-type Game interface {
-	init() error
-
-	PlayerReady(string, map[string][]int) error
-	BothReady() (bool, error)
-
-	OtherPlayer(string) (string, error)
-
-	StartGame(string) error
-
-	MakeMove(string, []int) error
 }
 
 func NewBattleShips(p1, p2 string) (*BattleShips, error) {
@@ -113,7 +66,7 @@ func (g *BattleShips) init() error {
 	g.p1Ship = make(map[string]*StringSet)
 	g.p2Ship = make(map[string]*StringSet)
 
-	for shipCode, _ := range lengthOfType {
+	for shipCode := range lengthOfType {
 		g.p1Ship[shipCode] = &StringSet{}
 		g.p2Ship[shipCode] = &StringSet{}
 	}
@@ -128,6 +81,8 @@ func (g *BattleShips) StartGame(player string) {
 
 // BothReady returns true when both player are true
 func (g *BattleShips) BothReady() bool {
+	g.Lock()
+	defer g.Unlock()
 	return g.p1BoardDone && g.p2BoardDone
 }
 
@@ -314,14 +269,14 @@ type BoardPoint struct {
 	Y int `json:"y"`
 }
 
+func (p *BoardPoint) String() string {
+	return fmt.Sprintf("%02d,%02d", p.X, p.Y)
+}
+
 type extra struct {
 	ShipDown bool   `json:"shipDown,omitempty"`
 	GameOver bool   `json:"gameOver,omitempty"`
 	ShipType string `json:"partOf,omitempty"`
-}
-
-func (p *BoardPoint) String() string {
-	return fmt.Sprintf("%02d,%02d", p.X, p.Y)
 }
 
 type response struct {
