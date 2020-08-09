@@ -1,0 +1,8 @@
+static/
+bootstrap.css linguist-vendored=true
+jquery.js linguist-vendored=true
+jquery-migrate.js linguist-vendored=true
+socket.io.js.map linguist-vendored=true
+socket.js linguist-vendored=true
+css.css linguist-vendored=false
+client.js linguist-vendored=false
