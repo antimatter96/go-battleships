@@ -19,6 +19,8 @@ type Server struct {
 	Queue     []string
 
 	playerIsIn map[string]string
+
+	games map[string]*BattleShips
 	//addUserHandler func()
 }
 
@@ -26,6 +28,7 @@ func (server *Server) Init() {
 
 	server.present = make(map[string]bool)
 	server.socketOf = make(map[string]*socketio.Conn)
+	server.games = make(map[string]*BattleShips)
 
 	server.Queue = make([]string, 0)
 
@@ -73,16 +76,11 @@ func (server *Server) Init() {
 
 	server.Server.OnEvent("/", "updateSocket", server.JoinGameHandler)
 
-	server.Server.OnEvent("/", "boardMade", server.DisconnectHandler)
+	server.Server.OnEvent("/", "boardMade", server.BoardMadeHandler)
 	server.Server.OnEvent("/", "makeMove", server.DisconnectHandler)
 
 	server.Server.OnEvent("/", "join", server.JoinGameHandler)
 	server.Server.OnEvent("/", "addUser", server.AddUserHandler)
-
-	server.Server.OnEvent("/chat", "msg", func(s socketio.Conn, msg string) string {
-		s.SetContext(msg)
-		return "recv " + msg
-	})
 
 	server.Server.OnEvent("/", "bye", func(s socketio.Conn) string {
 		last := s.Context().(string)
@@ -92,7 +90,7 @@ func (server *Server) Init() {
 	})
 
 	server.Server.OnError("/", func(s socketio.Conn, e error) {
-		fmt.Println("meet error:", e.Error(), s.Context())
+		fmt.Println("Internal Server Error:", e.Error())
 	})
 
 	server.Server.OnDisconnect("/", server.DisconnectHandler)

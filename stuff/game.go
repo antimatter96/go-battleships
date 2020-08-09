@@ -1,6 +1,8 @@
 package stuff
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	socketio "github.com/googollee/go-socket.io"
 )
@@ -56,12 +58,13 @@ type BattleShips struct {
 	p1Board [][]int
 	p2Board [][]int
 
-	p1Ship map[int]StringSet
-	p2Ship map[int]StringSet
+	p1Ship map[string]*StringSet
+	p2Ship map[string]*StringSet
 
 	turnOf string
 }
 
+// Game is
 type Game interface {
 	init() error
 
@@ -103,19 +106,19 @@ func (g *BattleShips) init() error {
 		g.p2Board[i] = make([]int, 10)
 	}
 
-	g.p1Ship = map[int]StringSet{
-		shipACode: StringSet{},
-		shipBCode: StringSet{},
-		shipCCode: StringSet{},
-		shipDCode: StringSet{},
-		shipECode: StringSet{},
+	g.p1Ship = map[string]*StringSet{
+		"A": &StringSet{},
+		"B": &StringSet{},
+		"C": &StringSet{},
+		"D": &StringSet{},
+		"E": &StringSet{},
 	}
-	g.p2Ship = map[int]StringSet{
-		shipACode: StringSet{},
-		shipBCode: StringSet{},
-		shipCCode: StringSet{},
-		shipDCode: StringSet{},
-		shipECode: StringSet{},
+	g.p2Ship = map[string]*StringSet{
+		"A": &StringSet{},
+		"B": &StringSet{},
+		"C": &StringSet{},
+		"D": &StringSet{},
+		"E": &StringSet{},
 	}
 
 	return nil
@@ -140,37 +143,37 @@ func (g *BattleShips) OtherPlayer(player string) string {
 	return g.p1
 }
 
+func (g *BattleShips) PlayerReady(player string, sp shipPlacement) error {
+	pd := &g.p1BoardDone
+	ps := &g.p1Ship
+	pb := &g.p1Board
+
+	// Add error if none
+	if player == g.p2 {
+		pd = &g.p2BoardDone
+		ps = &g.p2Ship
+		pb = &g.p2Board
+	}
+
+	if *pd {
+		return fmt.Errorf("%s", "Already Choosen")
+	}
+
+	for k, v := range sp {
+		for _, vv := range v {
+			(*ps)[k].Add(fmt.Sprintf("%02d,%02d", vv.X, vv.Y))
+			(*pb)[vv.X][vv.Y] = 1
+		}
+	}
+
+	*pd = true
+
+	return nil
+}
+
 // class Game {
 
 //   playerReady(player, shipPlacement) {
-//     let playerBoardDone = this.p1BoardDone;
-//     let playerShip = this.p1Ship;
-//     let playerBoard = this.p1Board;
-
-//     if (this.p2 === player) {
-//       playerBoardDone = this.p2BoardDone;
-//       playerShip = this.p2Ship;
-//       playerBoard = this.p2Board;
-//     }
-
-//     if (playerBoardDone.bool) {
-//       return {
-//         thisPlayer: [
-//           { message: "wait", data: { status: "Error", msg: "Already Choosen" } }
-//         ],
-//       };
-//     }
-
-//     for (let shipType in shipPlacement) {
-//       let length = this.lengthOfType[shipType];
-//       for (let i = 0; i < length; i++) {
-//         let point = shipPlacement[shipType][i];
-//         playerShip[shipType].add(JSON.stringify(point));
-//         playerBoard[point.x][point.y] = 1;
-//       }
-//     }
-
-//     playerBoardDone.bool = true;
 
 //     if (this.bothReady()) {
 //       this.startGame(player);
@@ -255,23 +258,6 @@ func (g *BattleShips) OtherPlayer(player string) string {
 //   }
 
 // }
-
-// package main
-
-// type Game interface {
-// 	AddPlayer()
-// 	EndGame()
-// 	Update(GameCommand) bool
-// }
-
-// var (
-// 	ShipLength []int = []int{5, 4, 3, 3, 2}
-// )
-
-// const (
-// 	ShipUp = iota
-// 	ShipDown
-// )
 
 type BoardPoint struct {
 	X int `json:"x"`

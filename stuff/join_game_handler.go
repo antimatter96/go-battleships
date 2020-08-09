@@ -114,9 +114,7 @@ func (server *Server) JoinGameHandler(s socketio.Conn, msg string) {
 	m1["otherPlayer"] = (*otherPlayer).Context().(string)
 	m2["otherPlayer"] = name
 
-	s.Emit("startGame", "")
-
-	(*otherPlayer).Emit("startGame", "")
+	server.games[game.ID] = game
 
 	//fmt.Println(">>", m1, "<<")
 	b1, err := json.Marshal(m1)

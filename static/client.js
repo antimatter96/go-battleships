@@ -135,6 +135,7 @@ $(document).ready(function () {
   });
 
   socket.on('startGame', function (data) {
+    data = JSON.parse(data);
     lockJoin = false;
     deleteElement('joinGame');
     $('#globalLoading').hide();
