@@ -164,7 +164,6 @@ class GameServer {
       'gameId': newGame.id,
       'gameToken': gameToken,
     });
-
   }
 
   sendStuff(currentSocket, otherPlayer, res) {

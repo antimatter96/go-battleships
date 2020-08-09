@@ -6,6 +6,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	socketio "github.com/googollee/go-socket.io"
+	"github.com/rs/zerolog/log"
 )
 
 type myCustomClaims2 struct {
@@ -50,7 +51,8 @@ type thisData struct {
 
 // BoardMadeHandler is
 func (server *Server) BoardMadeHandler(s socketio.Conn, msg string) {
-	fmt.Println("BoardMadeHandler", msg)
+	//log.Debug().Str("service", "BoardMadeHandler").Msgf("Data : %s", msg)
+	//fmt.Println("BoardMadeHandler", msg)
 
 	var dat *thisData
 	if err := json.Unmarshal([]byte(msg), &dat); err != nil {
@@ -70,7 +72,28 @@ func (server *Server) BoardMadeHandler(s socketio.Conn, msg string) {
 
 	gg := server.games[dat.GameID]
 
-	gg.PlayerReady(dat.Player, dat.ShipPlacement)
+	aa := gg.PlayerReady(dat.Player, dat.ShipPlacement)
+
+	for _, v := range aa.thisPlayerRes {
+		//fmt.Println("this", v.data)
+		b, err := json.Marshal(v.data)
+		if err != nil {
+			log.Fatal().Err(err)
+		}
+		s.Emit(v.message, string(b))
+	}
+
+	if len(aa.otherPlayerRes) != 0 {
+		otherPlayerSocket := server.socketOf[gg.OtherPlayer(dat.Player)]
+		for _, v := range aa.otherPlayerRes {
+			//fmt.Println("other", v.data)
+			b, err := json.Marshal(v.data)
+			if err != nil {
+				log.Fatal().Err(err)
+			}
+			(*otherPlayerSocket).Emit(v.message, string(b))
+		}
+	}
 }
 
 //

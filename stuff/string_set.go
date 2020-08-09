@@ -58,3 +58,12 @@ func (set *StringSet) Delete(s string) bool {
 	delete(set.mp, s)
 	return true
 }
+
+func (set *StringSet) Size() int {
+	set.Lock()
+	defer set.Unlock()
+	if set.mp == nil {
+		return 0
+	}
+	return len(set.mp)
+}

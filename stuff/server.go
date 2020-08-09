@@ -77,7 +77,7 @@ func (server *Server) Init() {
 	server.Server.OnEvent("/", "updateSocket", server.JoinGameHandler)
 
 	server.Server.OnEvent("/", "boardMade", server.BoardMadeHandler)
-	server.Server.OnEvent("/", "makeMove", server.DisconnectHandler)
+	server.Server.OnEvent("/", "makeMove", server.MakeMoveHandler)
 
 	server.Server.OnEvent("/", "join", server.JoinGameHandler)
 	server.Server.OnEvent("/", "addUser", server.AddUserHandler)

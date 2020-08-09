@@ -1,7 +1,9 @@
 package stuff
 
 import (
+	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/google/uuid"
 	socketio "github.com/googollee/go-socket.io"
@@ -48,6 +50,8 @@ var arrOfI = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
 var arrOfJ = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
 
 type BattleShips struct {
+	sync.Mutex
+
 	ID string
 	p1 string
 	p2 string
@@ -143,7 +147,8 @@ func (g *BattleShips) OtherPlayer(player string) string {
 	return g.p1
 }
 
-func (g *BattleShips) PlayerReady(player string, sp shipPlacement) error {
+// PlayerReady is
+func (g *BattleShips) PlayerReady(player string, sp shipPlacement) res {
 	pd := &g.p1BoardDone
 	ps := &g.p1Ship
 	pb := &g.p1Board
@@ -155,111 +160,177 @@ func (g *BattleShips) PlayerReady(player string, sp shipPlacement) error {
 		pb = &g.p2Board
 	}
 
+	thisPlayer := []response{{message: "", data: map[string]string{}}}
+	thisPlayer[0].message = "wait"
+
 	if *pd {
-		return fmt.Errorf("%s", "Already Choosen")
+
+		thisPlayer[0].data["msg"] = "Already Choosen"
+		thisPlayer[0].data["status"] = "Error"
+
+		return res{
+			thisPlayerRes: thisPlayer,
+		}
+
+		//return fmt.Errorf("%s", "Already Choosen")
 	}
 
 	for k, v := range sp {
 		for _, vv := range v {
-			(*ps)[k].Add(fmt.Sprintf("%02d,%02d", vv.X, vv.Y))
+			(*ps)[k].Add(vv.String())
 			(*pb)[vv.X][vv.Y] = 1
 		}
 	}
 
 	*pd = true
 
-	return nil
+	thisPlayer[0].data["msg"] = "Done"
+	thisPlayer[0].data["status"] = "OK"
+
+	if g.BothReady() {
+		thisPlayer = append(thisPlayer, response{"go", map[string]string{
+			"status": "OK",
+			"start":  "true",
+		}})
+
+		otherPlayer := response{"go", map[string]string{
+			"status": "OK",
+			"start":  "false",
+		}}
+
+		return res{
+			thisPlayerRes:  thisPlayer,
+			otherPlayerRes: []response{otherPlayer},
+		}
+	}
+
+	return res{
+		thisPlayerRes: thisPlayer,
+	}
 }
 
-// class Game {
+func (g *BattleShips) MakeMove(player string, point BoardPoint) res {
+	thisPlayer := []response{{message: "", data: map[string]string{}}}
 
-//   playerReady(player, shipPlacement) {
+	if g.turnOf != player {
+		thisPlayer[0].message = "moveError"
+		thisPlayer[0].data["msg"] = "Not your turn"
+		thisPlayer[0].data["status"] = "Error"
 
-//     if (this.bothReady()) {
-//       this.startGame(player);
-//       return {
-//         thisPlayer: [
-//           { message: "wait", data: { status: "OK", msg: "Done" } },
-//           { message: "go", data: { status: "OK", start: true } }
-//         ],
-//         otherPlayer: [
-//           { message: "go", data: { status: "OK", start: false } }
-//         ]
-//       };
-//     } else {
-//       return {
-//         thisPlayer: [
-//           { message: "wait", data: { status: "OK", msg: "Done" } },
-//         ]
-//       };
-//     }
-//   }
-//
-//   makeMove(player, move) {
-//     if (this.turnOf != player) {
-//       return {
-//         thisPlayer: [{ message: 'moveError', data: { status: "Error", msg: "Not your turn" } }]
-//       };
-//     }
-//     let x = move.x;
-//     let y = move.y;
-//     let point = { x: x, y: y };
+		return res{
+			thisPlayerRes: thisPlayer,
+		}
+	}
 
-//     var otherPlayerBoard;
+	x, y := point.X, point.Y
 
-//     var otherPlayerShip;
+	ps := &g.p2Ship
+	pb := &g.p2Board
 
-//     if (this.p1 === player) {
-//       otherPlayerBoard = this.p2Board;
-//       otherPlayerShip = this.p2Ship;
-//     } else {
-//       otherPlayerBoard = this.p1Board;
-//       otherPlayerShip = this.p1Ship;
-//     }
+	// Add error if none
+	if player == g.p2 {
+		ps = &g.p1Ship
+		pb = &g.p1Board
+	}
 
-//     if (otherPlayerBoard[x][y] === 1) {
-//       otherPlayerBoard[x][y] = -1;
-//       let tempPoint = JSON.stringify(point);
-//       let countZero = 0;
-//       let extra = {};
-//       for (var shipType in otherPlayerShip) {
-//         if (otherPlayerShip[shipType].has(tempPoint)) {
-//           otherPlayerShip[shipType].delete(tempPoint);
-//           extra.partOf = shipType;
-//           if (otherPlayerShip[shipType].size === 0) {
-//             extra.shipDown = true;
-//             countZero++;
-//           }
-//         } else if (otherPlayerShip[shipType].size === 0) {
-//           countZero++;
-//         }
-//         if (countZero === 5) {
-//           console.log("Over");
-//           extra.gameOver = true;
-//         }
-//       }
-//       this.turnOf = this.otherPlayer(player);
-//       return {
-//         thisPlayer: [{ message: "yourMove", data: { status: "OK", result: "Hit", extra: extra } }],
-//         otherPlayer: [{ message: "oppMove", data: { status: "OK", result: "Hit", point: move, extra: extra } }]
-//       };
-//     } else if (otherPlayerBoard[x][y] === 0) {
-//       otherPlayerBoard[x][y] = -1;
-//       this.turnOf = this.otherPlayer(player);
-//       return {
-//         thisPlayer: [{ message: "yourMove", data: { status: "OK", result: "Miss" } }],
-//         otherPlayer: [{ message: "oppMove", data: { status: "OK", result: "Miss", point: move } }]
-//       };
-//     } else {
-//       return {
-//         thisPlayer: [{ message: "yourMove", data: { status: "OK", result: "Repeat" } }],
-//       };
-//     }
-//   }
+	thisPlayer[0].message = "yourMove"
+	thisPlayer[0].data["status"] = "OK"
 
-// }
+	if (*pb)[x][y] == 1 {
+		(*pb)[x][y] = -1
+		g.turnOf = g.OtherPlayer(player)
+
+		tempPoint := point.String()
+		countZero := 0
+		extra := &Extra{}
+
+		for k, v := range *ps {
+			// TODO : Simply delete and check result, no need to check and delete
+			if v.Has(tempPoint) {
+				(*v).Delete(tempPoint)
+				extra.ShipType = k
+				if v.Size() == 0 {
+					extra.ShipDown = true
+				}
+			}
+		}
+
+		for _, v := range *ps {
+			if v.Size() == 0 {
+				countZero++
+			}
+		}
+
+		if countZero == 5 {
+			extra.GameOver = true
+		}
+
+		b, err := json.Marshal(extra)
+		if err != nil {
+			panic(err)
+		}
+
+		thisPlayer[0].data["result"] = "Hit"
+		thisPlayer[0].data["extra"] = string(b)
+
+		otherPlayer := response{"oppMove", map[string]string{
+			"status": "OK",
+			"result": "Miss",
+			"point":  point.String(),
+			"extra":  string(b),
+		}}
+
+		return res{
+			thisPlayerRes:  thisPlayer,
+			otherPlayerRes: []response{otherPlayer},
+		}
+	} else if (*pb)[x][y] == 0 {
+		(*pb)[x][y] = -1
+		g.turnOf = g.OtherPlayer(player)
+
+		thisPlayer[0].data["result"] = "Miss"
+
+		otherPlayer := response{"oppMove", map[string]string{
+			"status": "OK",
+			"result": "Hit",
+			"point":  point.String(),
+		}}
+
+		return res{
+			thisPlayerRes:  thisPlayer,
+			otherPlayerRes: []response{otherPlayer},
+		}
+
+	} else {
+		thisPlayer[0].data["result"] = "Repeat"
+
+		return res{
+			thisPlayerRes: thisPlayer,
+		}
+	}
+}
 
 type BoardPoint struct {
 	X int `json:"x"`
 	Y int `json:"y"`
+}
+
+type Extra struct {
+	ShipDown bool   `json:"shipDown,omitempty"`
+	GameOver bool   `json:"gameOver,omitempty"`
+	ShipType string `json:"partOf,omitempty"`
+}
+
+func (p *BoardPoint) String() string {
+	return fmt.Sprintf("%02d,%02d", p.X, p.Y)
+}
+
+type response struct {
+	message string
+	data    map[string]string
+}
+
+type res struct {
+	otherPlayerRes []response
+	thisPlayerRes  []response
 }

@@ -2,7 +2,6 @@ package stuff
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"time"
 
@@ -12,17 +11,17 @@ import (
 
 // AddUserHandler is
 func (server *Server) AddUserHandler(s socketio.Conn, msg string) {
-	fmt.Println("AddUserHandler", msg)
+	//fmt.Println("AddUserHandler", msg)
 
 	var dat map[string]string
 	if err := json.Unmarshal([]byte(msg), &dat); err != nil {
 		panic(err)
 	}
-	fmt.Println(dat)
+	//fmt.Println(dat)
 
 	m := make(map[string]string)
 	defer func() {
-		fmt.Println(">>", m, "<<")
+		//fmt.Println(">>", m, "<<")
 		b, err := json.Marshal(m)
 		if err != nil {
 			log.Fatal(err)
@@ -43,7 +42,6 @@ func (server *Server) AddUserHandler(s socketio.Conn, msg string) {
 		"exp":  time.Now().Unix() + 36000,
 	})
 	tokenString, err := token.SignedString(server.Key)
-
 	if err != nil {
 		log.Fatal(err)
 	}
