@@ -9,7 +9,7 @@ $(document).ready(function () {
   let socket = io.connect(hostname);
   let orginal = socket.emit.bind(socket);
 
-  socket.emit = function(msg, data) {
+  socket.emit = function (msg, data) {
     if (data != undefined) {
       data.userToken = userToken;
       data.gameToken = gameToken;
@@ -220,11 +220,13 @@ $(document).ready(function () {
   function addShipClass(type, i, j, horizontal) {
     if (horizontal) {
       for (let y = j; y < j + lengthOfType[type]; y++) {
-        $('#cell-' + i + y).addClass('ship' + type);
+        console.log('#cell-' + i + "-" + y, $('#cell-' + i + "-" + y));
+        $('#cell-' + i + "-" + y).addClass('ship' + type);
       }
     } else {
       for (let x = i; x < i + lengthOfType[type]; x++) {
-        $('#cell-' + x + j).addClass('ship' + type);
+        console.log('#cell-' + x + "-" + j, $('#cell-' + x + "-" + j));
+        $('#cell-' + x + "-" + j).addClass('ship' + type);
       }
     }
   }
@@ -269,7 +271,7 @@ $(document).ready(function () {
       points = points.value;
       if (points) {
         points = JSON.parse(points);
-        $('#cell-' + points.x + points.y).removeClass('ship' + type);
+        $('#cell-' + points.x + "-" + points.y).removeClass('ship' + type);
       } else {
         break;
       }
@@ -518,7 +520,7 @@ $(document).ready(function () {
     if (data.result === "Hit") {
       myTurn = !myTurn;
       otherPlayerBoard[lastMove.x][lastMove.y] = 1;
-      $('#opp-cell-' + lastMove.x + lastMove.y).addClass("hit");
+      $('#opp-cell-' + lastMove.x + "-" + lastMove.y).addClass("hit");
       oppShips[data.extra.partOf].add(JSON.stringify(lastMove));
       if (data.extra.shipDown) {
         markShipDown(data.extra.partOf);
@@ -530,7 +532,7 @@ $(document).ready(function () {
     } else if (data.result === "Miss") {
       myTurn = !myTurn;
       otherPlayerBoard[lastMove.x][lastMove.y] = -1;
-      $('#opp-cell-' + lastMove.x + lastMove.y).addClass("miss");
+      $('#opp-cell-' + lastMove.x + "-" + lastMove.y).addClass("miss");
     } else {
       $('#errorShoot').text("Repeat");
     }
@@ -546,10 +548,11 @@ $(document).ready(function () {
       x: parseInt(cc[0], 10),
       y: parseInt(cc[1], 10)
     };
+    console.log(data.point);
     switch (data.result) {
       case "Hit":
         myTurn = !myTurn;
-        $('#cell-' + data.point.x + data.point.y).addClass("hit");
+        $('#cell-' + data.point.x + "-" + data.point.y).addClass("hit");
         if (data.extra && data.extra.gameOver) {
           //
           endGame(true);
@@ -557,7 +560,7 @@ $(document).ready(function () {
         break;
       case "Miss":
         myTurn = !myTurn;
-        $('#cell-' + data.point.x + data.point.y).addClass("miss");
+        $('#cell-' + data.point.x + "-" + data.point.y).addClass("miss");
         break;
     }
     $('#globalLoading').hide();
@@ -571,7 +574,7 @@ $(document).ready(function () {
       points = points.value;
       if (points) {
         points = JSON.parse(points);
-        $('#opp-cell-' + points.x + points.y).addClass('ship' + type);
+        $('#opp-cell-' + points.x + "-" + points.y).addClass('ship' + type);
       } else {
         break;
       }

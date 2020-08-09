@@ -55,23 +55,18 @@
 				<h3>Place your ships</h3>
 			</div>
 
-      {{ $sl1 := .Numbers }}
-      {{ $sl2 := .Numbers }}
+			{{ $sl1 := .Numbers }}
+			{{ $sl2 := .Numbers }}
 
 			<div id="chooseBoard" class="col-md-5 col-md-offset-1">
-				<div class="board-row">
-					{{ range .Letters }}
-					<span class="board-cell-info btn" data-info="{{ . }}"></span>
-					{{ end }}
+				<div class="board-row">{{ range .GridLetters }}
+					<span class="board-cell-info btn" data-info="{{ . }}"></span>{{ end }}
 				</div>
 				{{ range $i := $sl1 }}
 				<div class="board-row">
-					<span class="board-cell-info btn" data-info="{{ $i }}"></span>
-					{{ range $j := $sl2 }}
-					<span class="board-cell btn" id="cell-{{ $i }}{{ decInt $j 1 }}"></span>
-					{{ end }}
-				</div>
-				{{end}}
+					<span class="board-cell-info btn" data-info="{{ $i }}"></span>{{ range $j := $sl2 }}
+					<span class="board-cell btn" id="cell-{{ decInt $i 1 }}-{{ decInt $j 1 }}"></span>{{ end }}
+				</div>{{ end }}
 			</div>
 
 			<div id="placementControls" class="col-md-6 container">
@@ -119,7 +114,7 @@
 				<span class="col-md-1 boardInpt col-md-offset-8"><input id="shoti" class="form-control shotInptXY" type="number"
 						min="1" max="10" step="1" placeholder="0"></span>
 				<span class="col-md-1 boardInpt"><input id="shotj" class="form-control shotInptXY" minlength="1" maxlength="1"
-						placeholder="A"></span>
+						placeholder="A" list="defaultNumbers"></span>
 				<span class="col-md-2 boardBtn"><button id="btnShoot"
 						class="btn btn-primary btn-block btnShoot">Shoot!</button></span>
 				<span class="col-md-2 col-md-offset-10 centered-i boardBtn"><label id="errorShoot"
@@ -135,6 +130,10 @@
 				<h2>You lose !</h2>
 			</div>
 		</div>
+
+		<datalist id="defaultNumbers">{{ range .Letters }}
+			<option value="{{ . }}">{{ end }}
+		</datalist>
 
 	</main>
 	<script src="jquery.js"></script>

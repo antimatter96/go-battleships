@@ -142,6 +142,9 @@ func (g *BattleShips) OtherPlayer(player string) string {
 
 // PlayerReady is
 func (g *BattleShips) PlayerReady(player string, sp shipPlacement) res {
+	g.Lock()
+	defer g.Unlock()
+
 	pd := &g.p1BoardDone
 	ps := &g.p1Ship
 	pb := &g.p1Board
@@ -202,7 +205,11 @@ func (g *BattleShips) PlayerReady(player string, sp shipPlacement) res {
 	}
 }
 
+// MakeMove asd
 func (g *BattleShips) MakeMove(player string, point BoardPoint) res {
+	g.Lock()
+	defer g.Unlock()
+
 	thisPlayer := []response{{message: "", data: map[string]string{}}}
 
 	if g.turnOf != player {

@@ -22,14 +22,16 @@ type shipDesc struct {
 }
 
 type templateStruct struct {
-	Letters []byte
-	Numbers []int
-	Names   []shipDesc
+	Letters     []string
+	GridLetters []string
+	Numbers     []int
+	Names       []shipDesc
 }
 
 var ts = templateStruct{
-	Letters: []byte{'/', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'},
-	Numbers: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Letters:     []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"},
+	GridLetters: []string{"/", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J"},
+	Numbers:     []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 	Names: []shipDesc{
 		{"A", "Carrier (5)"},
 		{"B", "Submarine (4)"},
