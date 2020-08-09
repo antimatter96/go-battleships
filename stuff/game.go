@@ -110,19 +110,12 @@ func (g *BattleShips) init() error {
 		g.p2Board[i] = make([]int, 10)
 	}
 
-	g.p1Ship = map[string]*StringSet{
-		"A": &StringSet{},
-		"B": &StringSet{},
-		"C": &StringSet{},
-		"D": &StringSet{},
-		"E": &StringSet{},
-	}
-	g.p2Ship = map[string]*StringSet{
-		"A": &StringSet{},
-		"B": &StringSet{},
-		"C": &StringSet{},
-		"D": &StringSet{},
-		"E": &StringSet{},
+	g.p1Ship = make(map[string]*StringSet)
+	g.p2Ship = make(map[string]*StringSet)
+
+	for shipCode, _ := range lengthOfType {
+		g.p1Ship[shipCode] = &StringSet{}
+		g.p2Ship[shipCode] = &StringSet{}
 	}
 
 	return nil
