@@ -403,6 +403,7 @@ $(document).ready(function () {
   }
 
   socket.on('wait', function (data) {
+    data = JSON.parse(data);
     if (data.status === "Error") {
       $('#errorReady').text(data.msg);
       return;
@@ -459,7 +460,9 @@ $(document).ready(function () {
   let lastMove = {};
 
   socket.on('go', function (data) {
-    if (data.start) {
+    data = JSON.parse(data);
+    console.log("Go", data);
+    if (data.start == "true") {
       $('#globalLoading').hide();
       myTurn = true;
     }
@@ -508,6 +511,10 @@ $(document).ready(function () {
   }
 
   socket.on('yourMove', function (data) {
+    data = JSON.parse(data);
+    if (data.extra) {
+      data.extra = JSON.parse(data.extra);
+    }
     if (data.result === "Hit") {
       myTurn = !myTurn;
       otherPlayerBoard[lastMove.x][lastMove.y] = 1;
@@ -530,19 +537,28 @@ $(document).ready(function () {
   });
 
   socket.on('oppMove', function (data) {
+    data = JSON.parse(data);
+    if (data.extra) {
+      data.extra = JSON.parse(data.extra);
+    }
+    let cc = data.point.split(",");
+    data.point = {
+      x: parseInt(cc[0], 10),
+      y: parseInt(cc[1], 10)
+    };
     switch (data.result) {
-    case "Hit":
-      myTurn = !myTurn;
-      $('#cell-' + data.point.x + data.point.y).addClass("hit");
-      if (data.extra.gameOver) {
-        //
-        endGame(true);
-      }
-      break;
-    case "Miss":
-      myTurn = !myTurn;
-      $('#cell-' + data.point.x + data.point.y).addClass("miss");
-      break;
+      case "Hit":
+        myTurn = !myTurn;
+        $('#cell-' + data.point.x + data.point.y).addClass("hit");
+        if (data.extra && data.extra.gameOver) {
+          //
+          endGame(true);
+        }
+        break;
+      case "Miss":
+        myTurn = !myTurn;
+        $('#cell-' + data.point.x + data.point.y).addClass("miss");
+        break;
     }
     $('#globalLoading').hide();
   });
