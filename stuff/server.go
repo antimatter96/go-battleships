@@ -25,7 +25,6 @@ type Server struct {
 }
 
 func (server *Server) Init() {
-
 	server.present = make(map[string]bool)
 	server.socketOf = make(map[string]*socketio.Conn)
 	server.games = make(map[string]*BattleShips)

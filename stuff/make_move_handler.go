@@ -40,7 +40,7 @@ func (server *Server) MakeMoveHandler(s socketio.Conn, msg string) {
 
 	aa := gg.MakeMove(dat.Player, dat.Move)
 
-	fmt.Printf("%+v\n", aa)
+	//fmt.Printf("%+v\n", aa)
 
 	for _, v := range aa.thisPlayerRes {
 		//fmt.Println("this", v.data)

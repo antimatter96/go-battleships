@@ -74,6 +74,9 @@ func (server *Server) BoardMadeHandler(s socketio.Conn, msg string) {
 
 	aa := gg.PlayerReady(dat.Player, dat.ShipPlacement)
 
+	fmt.Println(dat.Player, aa.thisPlayerRes)
+	fmt.Println(gg.OtherPlayer(dat.Player), aa.otherPlayerRes)
+
 	for _, v := range aa.thisPlayerRes {
 		//fmt.Println("this", v.data)
 		b, err := json.Marshal(v.data)

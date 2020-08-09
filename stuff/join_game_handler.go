@@ -88,7 +88,7 @@ func (server *Server) JoinGameHandler(s socketio.Conn, msg string) {
 
 	otherPlayer := server.FindPlayerFor(name)
 	if otherPlayer == nil {
-		//fmt.Println("Not found for ", name)
+		fmt.Println("Not found for ", name)
 		return
 	}
 

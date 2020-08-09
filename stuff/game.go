@@ -149,7 +149,6 @@ func (g *BattleShips) PlayerReady(player string, sp shipPlacement) res {
 	ps := &g.p1Ship
 	pb := &g.p1Board
 
-	// Add error if none
 	if player == g.p2 {
 		pd = &g.p2BoardDone
 		ps = &g.p2Ship
@@ -160,15 +159,15 @@ func (g *BattleShips) PlayerReady(player string, sp shipPlacement) res {
 	thisPlayer[0].message = "wait"
 
 	if *pd {
-
 		thisPlayer[0].data["msg"] = "Already Choosen"
 		thisPlayer[0].data["status"] = "Error"
+
+		//return fmt.Errorf("%s", "Already Choosen")
 
 		return res{
 			thisPlayerRes: thisPlayer,
 		}
 
-		//return fmt.Errorf("%s", "Already Choosen")
 	}
 
 	for k, v := range sp {
