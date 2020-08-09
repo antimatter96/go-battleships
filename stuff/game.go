@@ -242,7 +242,7 @@ func (g *BattleShips) MakeMove(player string, point BoardPoint) res {
 
 		tempPoint := point.String()
 		countZero := 0
-		extra := &Extra{}
+		extra := &extra{}
 
 		for k, v := range *ps {
 			// TODO : Simply delete and check result, no need to check and delete
@@ -315,7 +315,7 @@ type BoardPoint struct {
 	Y int `json:"y"`
 }
 
-type Extra struct {
+type extra struct {
 	ShipDown bool   `json:"shipDown,omitempty"`
 	GameOver bool   `json:"gameOver,omitempty"`
 	ShipType string `json:"partOf,omitempty"`
