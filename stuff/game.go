@@ -29,8 +29,8 @@ type BattleShips struct {
 	p1Board [][]int
 	p2Board [][]int
 
-	p1Ship map[string]*StringSet
-	p2Ship map[string]*StringSet
+	p1Ship map[string]*stringSet
+	p2Ship map[string]*stringSet
 
 	turnOf string
 }
@@ -63,12 +63,12 @@ func (g *BattleShips) init() error {
 		g.p2Board[i] = make([]int, 10)
 	}
 
-	g.p1Ship = make(map[string]*StringSet)
-	g.p2Ship = make(map[string]*StringSet)
+	g.p1Ship = make(map[string]*stringSet)
+	g.p2Ship = make(map[string]*stringSet)
 
 	for shipCode := range lengthOfType {
-		g.p1Ship[shipCode] = &StringSet{}
-		g.p2Ship[shipCode] = &StringSet{}
+		g.p1Ship[shipCode] = &stringSet{}
+		g.p2Ship[shipCode] = &stringSet{}
 	}
 
 	return nil
@@ -127,7 +127,7 @@ func (g *BattleShips) PlayerReady(player string, sp shipPlacement) res {
 
 	for k, v := range sp {
 		for _, vv := range v {
-			(*ps)[k].Add(vv.String())
+			(*ps)[k].add(vv.String())
 			(*pb)[vv.X][vv.Y] = 1
 		}
 	}
@@ -200,17 +200,17 @@ func (g *BattleShips) MakeMove(player string, point BoardPoint) res {
 
 		for k, v := range *ps {
 			// TODO : Simply delete and check result, no need to check and delete
-			if v.Has(tempPoint) {
-				(*v).Delete(tempPoint)
+			if v.has(tempPoint) {
+				(*v).delete(tempPoint)
 				extra.ShipType = k
-				if v.Size() == 0 {
+				if v.size() == 0 {
 					extra.ShipDown = true
 				}
 			}
 		}
 
 		for _, v := range *ps {
-			if v.Size() == 0 {
+			if v.size() == 0 {
 				countZero++
 			}
 		}

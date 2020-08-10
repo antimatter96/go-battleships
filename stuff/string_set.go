@@ -6,7 +6,7 @@ import (
 )
 
 // StringSet is a set of strings
-type StringSet struct {
+type stringSet struct {
 	sync.Mutex
 	mp map[string]bool
 }
@@ -18,7 +18,7 @@ var (
 
 // Add - adds a string to the set
 // Will return an error if already present
-func (set *StringSet) Add(s string) bool {
+func (set *stringSet) add(s string) bool {
 	set.Lock()
 	defer set.Unlock()
 	if set.mp == nil {
@@ -32,7 +32,7 @@ func (set *StringSet) Add(s string) bool {
 }
 
 // Has - checks for string in the set
-func (set *StringSet) Has(s string) bool {
+func (set *stringSet) has(s string) bool {
 	set.Lock()
 	defer set.Unlock()
 	if set.mp == nil {
@@ -46,7 +46,7 @@ func (set *StringSet) Has(s string) bool {
 
 // Delete - deletes the string from the set
 // Will return true if was present and deleted
-func (set *StringSet) Delete(s string) bool {
+func (set *stringSet) delete(s string) bool {
 	set.Lock()
 	defer set.Unlock()
 	if set.mp == nil {
@@ -59,7 +59,7 @@ func (set *StringSet) Delete(s string) bool {
 	return true
 }
 
-func (set *StringSet) Size() int {
+func (set *stringSet) size() int {
 	set.Lock()
 	defer set.Unlock()
 	if set.mp == nil {
