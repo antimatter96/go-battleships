@@ -10,44 +10,6 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 )
 
-//
-type myCustomClaims struct {
-	Name string `json:"name"`
-	Exp  int64  `json:"exp"`
-	Nbf  int64  `json:"nbf"`
-	jwt.StandardClaims
-}
-
-func (server *Server) vetify(name, userToken string) bool {
-	//fmt.Println("here4")
-	token2, err := jwt.ParseWithClaims(userToken, &myCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return server.Key, nil
-	})
-
-	//fmt.Println("here5", token2)
-	if claims, ok := token2.Claims.(*myCustomClaims); ok && token2.Valid {
-		//fmt.Println("here7")
-		if claims.Name == name {
-			return true
-		}
-	} else if ve, ok := err.(*jwt.ValidationError); ok {
-		//fmt.Println("here8")
-		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-			fmt.Println("That's not even a token")
-		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-			// Token is either expired or not active yet
-			fmt.Println("Timing is everything")
-		} else {
-			fmt.Println("Couldn't handle this token:", err)
-		}
-	} else {
-		fmt.Println("Couldn't handle this token:", err)
-	}
-	//fmt.Println("here6")
-	fmt.Println(token2.Claims, err)
-	return false
-}
-
 func (server *Server) FindPlayerFor(name string) *socketio.Conn {
 	//fmt.Println("finding", name)
 	server.queueLock.Lock()
@@ -79,7 +41,7 @@ func (server *Server) JoinGameHandler(s socketio.Conn, msg string) {
 	}
 	//fmt.Println(dat)
 
-	if !server.vetify(dat["player"], dat["userToken"]) {
+	if !server.verify(dat["player"], dat["userToken"]) {
 		return
 	}
 

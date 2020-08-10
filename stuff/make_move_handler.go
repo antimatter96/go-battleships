@@ -29,11 +29,11 @@ func (server *Server) MakeMoveHandler(s socketio.Conn, msg string) {
 
 	fmt.Printf("MakeMoveHandler %+v\n", dat.Move)
 
-	if !server.vetify(dat.Player, dat.UserToken) {
+	if !server.verify(dat.Player, dat.UserToken) {
 		return
 	}
 
-	if !server.verifyGame(dat.GameID, dat.GameToken) {
+	if !server.verify(dat.GameID, dat.GameToken) {
 		return
 	}
 	gg := server.games[dat.GameID]
