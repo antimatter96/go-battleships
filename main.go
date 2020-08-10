@@ -5,17 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
 	socketio "github.com/googollee/go-socket.io"
 
 	stuff "github.com/antimatter96/go-battleships/stuff"
 )
-
-type MyCustomClaims struct {
-	Foo string `json:"foo"`
-	ID  string `json:"id"`
-	jwt.StandardClaims
-}
 
 func main() {
 	privateKeyPEM, err := ioutil.ReadFile("./private_key.pem")
