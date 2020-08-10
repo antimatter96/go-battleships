@@ -73,13 +73,13 @@ func (server *Server) Init() {
 		return nil
 	})
 
-	server.Server.OnEvent("/", "updateSocket", server.JoinGameHandler)
+	server.Server.OnEvent("/", "updateSocket", server.joinGameHandler)
 
-	server.Server.OnEvent("/", "boardMade", server.BoardMadeHandler)
-	server.Server.OnEvent("/", "makeMove", server.MakeMoveHandler)
+	server.Server.OnEvent("/", "boardMade", server.boardMadeHandler)
+	server.Server.OnEvent("/", "makeMove", server.makeMoveHandler)
 
-	server.Server.OnEvent("/", "join", server.JoinGameHandler)
-	server.Server.OnEvent("/", "addUser", server.AddUserHandler)
+	server.Server.OnEvent("/", "join", server.joinGameHandler)
+	server.Server.OnEvent("/", "addUser", server.addUserHandler)
 
 	server.Server.OnEvent("/", "bye", func(s socketio.Conn) string {
 		last := s.Context().(string)

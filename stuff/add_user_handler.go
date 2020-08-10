@@ -9,8 +9,7 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 )
 
-// AddUserHandler is
-func (server *Server) AddUserHandler(s socketio.Conn, msg string) {
+func (server *Server) addUserHandler(s socketio.Conn, msg string) {
 	//fmt.Println("AddUserHandler", msg)
 
 	var dat map[string]string

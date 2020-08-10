@@ -10,7 +10,7 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 )
 
-func (server *Server) FindPlayerFor(name string) *socketio.Conn {
+func (server *Server) findPlayerFor(name string) *socketio.Conn {
 	//fmt.Println("finding", name)
 	server.queueLock.Lock()
 	defer server.queueLock.Unlock()
@@ -32,7 +32,7 @@ func (server *Server) FindPlayerFor(name string) *socketio.Conn {
 	return nil
 }
 
-func (server *Server) JoinGameHandler(s socketio.Conn, msg string) {
+func (server *Server) joinGameHandler(s socketio.Conn, msg string) {
 	//fmt.Println("JoinGameHandler:", msg)
 
 	var dat map[string]string
@@ -48,7 +48,7 @@ func (server *Server) JoinGameHandler(s socketio.Conn, msg string) {
 	name := dat["player"]
 	//fmt.Println("The player is", name, s.Context(), name == s.Context())
 
-	otherPlayer := server.FindPlayerFor(name)
+	otherPlayer := server.findPlayerFor(name)
 	if otherPlayer == nil {
 		fmt.Println("Not found for ", name)
 		return

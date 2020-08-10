@@ -16,8 +16,7 @@ type thisData2 struct {
 	Move      BoardPoint `json:"move"`
 }
 
-// BoardMadeHandler is
-func (server *Server) MakeMoveHandler(s socketio.Conn, msg string) {
+func (server *Server) makeMoveHandler(s socketio.Conn, msg string) {
 	//log.Debug().Str("service", "MakeMoveHandler").Msgf("Data : %s", msg)
 	//fmt.Println("MakeMoveHandler", msg)
 

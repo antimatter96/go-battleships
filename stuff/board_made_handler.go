@@ -16,8 +16,7 @@ type thisData struct {
 	ShipPlacement shipPlacement `json:"shipPlacement"`
 }
 
-// BoardMadeHandler is
-func (server *Server) BoardMadeHandler(s socketio.Conn, msg string) {
+func (server *Server) boardMadeHandler(s socketio.Conn, msg string) {
 	//log.Debug().Str("service", "BoardMadeHandler").Msgf("Data : %s", msg)
 	//fmt.Println("BoardMadeHandler", msg)
 

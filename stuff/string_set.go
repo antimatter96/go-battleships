@@ -59,6 +59,7 @@ func (set *stringSet) delete(s string) bool {
 	return true
 }
 
+// Size - returns number of elements in the set
 func (set *stringSet) size() int {
 	set.Lock()
 	defer set.Unlock()
