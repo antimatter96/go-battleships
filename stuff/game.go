@@ -160,7 +160,7 @@ func (g *BattleShips) PlayerReady(player string, sp shipPlacement) res {
 }
 
 // MakeMove asd
-func (g *BattleShips) MakeMove(player string, point BoardPoint) res {
+func (g *BattleShips) MakeMove(player string, point boardPoint) res {
 	g.Lock()
 	defer g.Unlock()
 
@@ -264,12 +264,12 @@ func (g *BattleShips) MakeMove(player string, point BoardPoint) res {
 	}
 }
 
-type BoardPoint struct {
+type boardPoint struct {
 	X int `json:"x"`
 	Y int `json:"y"`
 }
 
-func (p *BoardPoint) String() string {
+func (p *boardPoint) String() string {
 	return fmt.Sprintf("%02d,%02d", p.X, p.Y)
 }
 

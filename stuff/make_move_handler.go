@@ -13,7 +13,7 @@ type thisData2 struct {
 	UserToken string
 	GameToken string
 	GameID    string
-	Move      BoardPoint `json:"move"`
+	Move      boardPoint `json:"move"`
 }
 
 func (server *Server) makeMoveHandler(s socketio.Conn, msg string) {

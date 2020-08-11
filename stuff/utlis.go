@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dgrijalva/jwt-go"
+	socketio "github.com/googollee/go-socket.io"
 )
 
 type commonClaims struct {
@@ -24,10 +25,9 @@ func (server *Server) verify(claim, encryptedToken string) bool {
 		}
 	} else if ve, ok := err.(*jwt.ValidationError); ok {
 		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-			fmt.Println("That's not even a token")
+			fmt.Println("Invalid Token")
 		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-			// Token is either expired or not active yet
-			fmt.Println("Timing is everything")
+			fmt.Println("Expired Token")
 		} else {
 			fmt.Println("Couldn't handle this token:", err)
 		}
@@ -36,4 +36,26 @@ func (server *Server) verify(claim, encryptedToken string) bool {
 	}
 	fmt.Println(token.Claims, err)
 	return false
+}
+
+func (server *Server) findPlayerFor(name string) *socketio.Conn {
+	//fmt.Println("finding", name)
+	server.queueLock.Lock()
+	defer server.queueLock.Unlock()
+
+	if len(server.Queue) == 0 {
+		server.Queue = append(server.Queue, name)
+		return nil
+	}
+
+	for opp := server.Queue[0]; len(server.Queue) != 0; server.Queue = server.Queue[1:] {
+		socket, present := server.socketOf[opp]
+		if !present {
+			continue
+		}
+		server.Queue = server.Queue[1:]
+		return socket
+	}
+
+	return nil
 }

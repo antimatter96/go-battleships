@@ -66,4 +66,4 @@ func (server *Server) boardMadeHandler(s socketio.Conn, msg string) {
 }
 
 //
-type shipPlacement map[string](map[int]BoardPoint)
+type shipPlacement map[string](map[int]boardPoint)

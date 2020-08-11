@@ -1,7 +1,6 @@
 package stuff
 
 import (
-	"errors"
 	"sync"
 )
 
@@ -11,13 +10,8 @@ type stringSet struct {
 	mp map[string]bool
 }
 
-// ErrorAlreadyPresent is returned when
-var (
-	ErrorAlreadyPresent = errors.New("Element already present")
-)
-
 // Add - adds a string to the set
-// Will return an error if already present
+// Will return false if already present
 func (set *stringSet) add(s string) bool {
 	set.Lock()
 	defer set.Unlock()
