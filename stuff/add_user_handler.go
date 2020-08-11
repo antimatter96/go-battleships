@@ -2,18 +2,21 @@ package stuff
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	socketio "github.com/googollee/go-socket.io"
+	"github.com/rs/zerolog/log"
 )
 
 func (server *Server) addUserHandler(s socketio.Conn, msg string) {
-	//fmt.Println("AddUserHandler", msg)
+	sublogger := log.With().Str("service", "addUserHandler").Logger()
+
+	sublogger.Debug().Msgf("Data : %s", msg)
 
 	var dat map[string]string
 	if err := json.Unmarshal([]byte(msg), &dat); err != nil {
+		sublogger.Error().AnErr("JSON unmarshalling error", err)
 		panic(err)
 	}
 	//fmt.Println(dat)
@@ -23,7 +26,7 @@ func (server *Server) addUserHandler(s socketio.Conn, msg string) {
 		//fmt.Println(">>", m, "<<")
 		b, err := json.Marshal(m)
 		if err != nil {
-			log.Fatal(err)
+			sublogger.Error().AnErr("JSON marshalling error", err)
 		}
 		s.Emit("userAdded", string(b))
 	}()
@@ -42,7 +45,8 @@ func (server *Server) addUserHandler(s socketio.Conn, msg string) {
 	})
 	tokenString, err := token.SignedString(server.Key)
 	if err != nil {
-		log.Fatal(err)
+		sublogger.Error().AnErr("Token signing", err)
+		panic(err)
 	}
 
 	m["msg"] = "OK"

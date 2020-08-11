@@ -35,7 +35,7 @@ type BattleShips struct {
 	turnOf string
 }
 
-func NewBattleShips(p1, p2 string) (*BattleShips, error) {
+func newBattleShips(p1, p2 string) (*BattleShips, error) {
 	game := &BattleShips{p1: p1, p2: p2}
 	err := game.init()
 	return game, err
@@ -76,6 +76,8 @@ func (g *BattleShips) init() error {
 
 // StartGame sets the turn to the current player
 func (g *BattleShips) StartGame(player string) {
+	g.Lock()
+	defer g.Unlock()
 	g.turnOf = player
 }
 

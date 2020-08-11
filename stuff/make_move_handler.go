@@ -2,7 +2,6 @@ package stuff
 
 import (
 	"encoding/json"
-	"fmt"
 
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/rs/zerolog/log"
@@ -14,16 +13,18 @@ type thisData2 struct {
 }
 
 func (server *Server) makeMoveHandler(s socketio.Conn, msg string) {
-	//log.Debug().Str("service", "MakeMoveHandler").Msgf("Data : %s", msg)
+	sublogger := log.With().Str("service", "makeMoveHandler").Logger()
+
+	sublogger.Debug().Msgf("Data : %s", msg)
 	//fmt.Println("MakeMoveHandler", msg)
 
 	var dat *thisData2
 	if err := json.Unmarshal([]byte(msg), &dat); err != nil {
-		//fmt.Println("BoardMadeHandler", err)
-		panic(fmt.Errorf("JSON UNMARSHAL ERROR %v", err))
+		sublogger.Error().AnErr("JSON marshalling error", err)
+		panic(err)
 	}
 
-	fmt.Printf("MakeMoveHandler %+v\n", dat.Move)
+	sublogger.Debug().Msgf("Parsed Data : %+v", dat.Move)
 
 	if !server.verify(dat.Player, dat.UserToken) {
 		return
@@ -42,7 +43,8 @@ func (server *Server) makeMoveHandler(s socketio.Conn, msg string) {
 		//fmt.Println("this", v.data)
 		b, err := json.Marshal(v.data)
 		if err != nil {
-			log.Fatal().Err(err)
+			sublogger.Error().AnErr("JSON marshalling error", err)
+			return
 		}
 		s.Emit(v.message, string(b))
 	}
@@ -53,7 +55,8 @@ func (server *Server) makeMoveHandler(s socketio.Conn, msg string) {
 			//fmt.Println("other", v.data)
 			b, err := json.Marshal(v.data)
 			if err != nil {
-				log.Fatal().Err(err)
+				sublogger.Error().AnErr("JSON marshalling error", err)
+				return
 			}
 			(*otherPlayerSocket).Emit(v.message, string(b))
 		}
