@@ -217,16 +217,19 @@ $(document).ready(function () {
   let arrOfI = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
   let arrOfJ = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
+
+  function cellId(pre, x, y) {
+    return `#${pre}-${x}-${y}`;
+  }
+
   function addShipClass(type, i, j, horizontal) {
     if (horizontal) {
       for (let y = j; y < j + lengthOfType[type]; y++) {
-        console.log('#cell-' + i + "-" + y, $('#cell-' + i + "-" + y));
-        $('#cell-' + i + "-" + y).addClass('ship' + type);
+        $(cellId("cell", i, y)).addClass('ship' + type);
       }
     } else {
       for (let x = i; x < i + lengthOfType[type]; x++) {
-        console.log('#cell-' + x + "-" + j, $('#cell-' + x + "-" + j));
-        $('#cell-' + x + "-" + j).addClass('ship' + type);
+        $(cellId("cell", x, j)).addClass('ship' + type);
       }
     }
   }
@@ -271,7 +274,7 @@ $(document).ready(function () {
       points = points.value;
       if (points) {
         points = JSON.parse(points);
-        $('#cell-' + points.x + "-" + points.y).removeClass('ship' + type);
+        $(cellId("cell", points.x, points.y)).removeClass('ship' + type);
       } else {
         break;
       }
@@ -520,7 +523,7 @@ $(document).ready(function () {
     if (data.result === "Hit") {
       myTurn = !myTurn;
       otherPlayerBoard[lastMove.x][lastMove.y] = 1;
-      $('#opp-cell-' + lastMove.x + "-" + lastMove.y).addClass("hit");
+      $(cellId("opp-cell", lastMove.x, lastMove.y)).addClass("hit");
       oppShips[data.extra.partOf].add(JSON.stringify(lastMove));
       if (data.extra.shipDown) {
         markShipDown(data.extra.partOf);
@@ -532,7 +535,7 @@ $(document).ready(function () {
     } else if (data.result === "Miss") {
       myTurn = !myTurn;
       otherPlayerBoard[lastMove.x][lastMove.y] = -1;
-      $('#opp-cell-' + lastMove.x + "-" + lastMove.y).addClass("miss");
+      $(cellId("opp-cell", lastMove.x, lastMove.y)).addClass("miss");
     } else {
       $('#errorShoot').text("Repeat");
     }
@@ -552,7 +555,7 @@ $(document).ready(function () {
     switch (data.result) {
       case "Hit":
         myTurn = !myTurn;
-        $('#cell-' + data.point.x + "-" + data.point.y).addClass("hit");
+        $(cellId("cell", data.point.x, data.point.y)).addClass("hit");
         if (data.extra && data.extra.gameOver) {
           //
           endGame(true);
@@ -560,7 +563,7 @@ $(document).ready(function () {
         break;
       case "Miss":
         myTurn = !myTurn;
-        $('#cell-' + data.point.x + "-" + data.point.y).addClass("miss");
+        $(cellId("cell", data.point.x, data.point.y)).addClass("miss");
         break;
     }
     $('#globalLoading').hide();
@@ -574,7 +577,7 @@ $(document).ready(function () {
       points = points.value;
       if (points) {
         points = JSON.parse(points);
-        $('#opp-cell-' + points.x + "-" + points.y).addClass('ship' + type);
+        $(cellId("opp-cell", points.x, points.y)).addClass('ship' + type);
       } else {
         break;
       }
