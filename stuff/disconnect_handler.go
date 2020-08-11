@@ -10,7 +10,9 @@ import (
 func (server *Server) DisconnectHandler(s socketio.Conn, msg string) {
 	fmt.Println("DisconnectHandler", msg, s.Context())
 
-	name := s.Context().(string)
+	if s.Context() != nil {
+		name := s.Context().(string)
 
-	delete(server.socketOf, name)
+		delete(server.socketOf, name)
+	}
 }
