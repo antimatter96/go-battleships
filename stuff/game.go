@@ -96,7 +96,7 @@ func (g *BattleShips) OtherPlayer(player string) string {
 }
 
 // PlayerReady is
-func (g *BattleShips) PlayerReady(player string, sp shipPlacement) res {
+func (g *BattleShips) PlayerReady(player string, sp shipPlacement) gameResponse {
 	g.Lock()
 	defer g.Unlock()
 
@@ -119,7 +119,7 @@ func (g *BattleShips) PlayerReady(player string, sp shipPlacement) res {
 
 		//return fmt.Errorf("%s", "Already Choosen")
 
-		return res{
+		return gameResponse{
 			thisPlayerRes: thisPlayer,
 		}
 
@@ -148,19 +148,19 @@ func (g *BattleShips) PlayerReady(player string, sp shipPlacement) res {
 			"start":  "false",
 		}}
 
-		return res{
+		return gameResponse{
 			thisPlayerRes:  thisPlayer,
 			otherPlayerRes: []response{otherPlayer},
 		}
 	}
 
-	return res{
+	return gameResponse{
 		thisPlayerRes: thisPlayer,
 	}
 }
 
-// MakeMove asd
-func (g *BattleShips) MakeMove(player string, point boardPoint) res {
+// MakeMove is used to
+func (g *BattleShips) MakeMove(player string, point boardPoint) gameResponse {
 	g.Lock()
 	defer g.Unlock()
 
@@ -171,7 +171,7 @@ func (g *BattleShips) MakeMove(player string, point boardPoint) res {
 		thisPlayer[0].data["msg"] = "Not your turn"
 		thisPlayer[0].data["status"] = "Error"
 
-		return res{
+		return gameResponse{
 			thisPlayerRes: thisPlayer,
 		}
 	}
@@ -234,7 +234,7 @@ func (g *BattleShips) MakeMove(player string, point boardPoint) res {
 			"extra":  string(b),
 		}}
 
-		return res{
+		return gameResponse{
 			thisPlayerRes:  thisPlayer,
 			otherPlayerRes: []response{otherPlayer},
 		}
@@ -250,7 +250,7 @@ func (g *BattleShips) MakeMove(player string, point boardPoint) res {
 			"point":  point.String(),
 		}}
 
-		return res{
+		return gameResponse{
 			thisPlayerRes:  thisPlayer,
 			otherPlayerRes: []response{otherPlayer},
 		}
@@ -258,7 +258,7 @@ func (g *BattleShips) MakeMove(player string, point boardPoint) res {
 	} else {
 		thisPlayer[0].data["result"] = "Repeat"
 
-		return res{
+		return gameResponse{
 			thisPlayerRes: thisPlayer,
 		}
 	}
@@ -277,14 +277,4 @@ type extra struct {
 	ShipDown bool   `json:"shipDown,omitempty"`
 	GameOver bool   `json:"gameOver,omitempty"`
 	ShipType string `json:"partOf,omitempty"`
-}
-
-type response struct {
-	message string
-	data    map[string]string
-}
-
-type res struct {
-	otherPlayerRes []response
-	thisPlayerRes  []response
 }

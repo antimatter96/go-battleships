@@ -9,11 +9,8 @@ import (
 )
 
 type thisData2 struct {
-	Player    string
-	UserToken string
-	GameToken string
-	GameID    string
-	Move      boardPoint `json:"move"`
+	commonData
+	Move boardPoint `json:"move"`
 }
 
 func (server *Server) makeMoveHandler(s socketio.Conn, msg string) {

@@ -59,3 +59,20 @@ func (server *Server) findPlayerFor(name string) *socketio.Conn {
 
 	return nil
 }
+
+type gameResponse struct {
+	otherPlayerRes []response
+	thisPlayerRes  []response
+}
+
+type response struct {
+	message string
+	data    map[string]string
+}
+
+type commonData struct {
+	Player    string
+	UserToken string
+	GameToken string
+	GameID    string
+}

@@ -9,10 +9,7 @@ import (
 )
 
 type thisData struct {
-	Player        string
-	UserToken     string
-	GameToken     string
-	GameID        string
+	commonData
 	ShipPlacement shipPlacement `json:"shipPlacement"`
 }
 
