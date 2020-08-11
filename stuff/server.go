@@ -38,12 +38,12 @@ func (server *Server) Init() {
 		for {
 			select {
 			case <-ticker.C:
-				for x, y := range server.socketOf {
-					fmt.Println(x, (*y).Context(), (*y).ID())
-				}
-				for _, k := range server.Queue {
-					fmt.Println(k)
-				}
+				// for x, y := range server.socketOf {
+				// 	fmt.Println(x, (*y).Context(), (*y).ID())
+				// }
+				// for _, k := range server.Queue {
+				// 	fmt.Println(k)
+				// }
 			}
 		}
 	}()

@@ -23,8 +23,9 @@ type BattleShips struct {
 	p1 string
 	p2 string
 
-	p1BoardDone bool
-	p2BoardDone bool
+	playerReadyLock sync.Mutex
+	p1BoardDone     bool
+	p2BoardDone     bool
 
 	p1Board [][]int
 	p2Board [][]int
@@ -37,6 +38,8 @@ type BattleShips struct {
 
 func newBattleShips(p1, p2 string) (*BattleShips, error) {
 	game := &BattleShips{p1: p1, p2: p2}
+	game.Mutex = sync.Mutex{}
+	game.playerReadyLock = sync.Mutex{}
 	err := game.init()
 	return game, err
 }
@@ -83,8 +86,8 @@ func (g *BattleShips) StartGame(player string) {
 
 // BothReady returns true when both player are true
 func (g *BattleShips) BothReady() bool {
-	g.Lock()
-	defer g.Unlock()
+	g.playerReadyLock.Lock()
+	defer g.playerReadyLock.Unlock()
 	return g.p1BoardDone && g.p2BoardDone
 }
 

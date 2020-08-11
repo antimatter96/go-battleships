@@ -12,15 +12,14 @@ import (
 func (server *Server) joinGameHandler(s socketio.Conn, msg string) {
 	sublogger := log.With().Str("service", "joinGameHandleroo").Logger()
 
-	sublogger.Debug().Msgf("Data : %s", msg)
-	//fmt.Println("JoinGameHandler:", msg)
+	//sublogger.Debug().Msgf("Data : %s", msg)
 
 	var dat map[string]string
 	if err := json.Unmarshal([]byte(msg), &dat); err != nil {
 		sublogger.Error().AnErr("JSON unmarshalling error", err)
 		panic(err)
 	}
-	//fmt.Println(dat)
+	sublogger.Debug().Msgf("Data : %+v", dat)
 
 	if !server.verify(dat["player"], dat["userToken"]) {
 		return
@@ -34,6 +33,8 @@ func (server *Server) joinGameHandler(s socketio.Conn, msg string) {
 		sublogger.Debug().Msgf("Cant find player for : %s", name)
 		return
 	}
+
+	sublogger.Debug().Msgf("Found player for : %s ==>==> %s", name, (*otherPlayer).Context().(string))
 
 	game, err := newBattleShips(name, (*otherPlayer).Context().(string))
 	if err != nil {

@@ -2,7 +2,6 @@ package stuff
 
 import (
 	"encoding/json"
-	"fmt"
 
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/rs/zerolog/log"
@@ -14,13 +13,14 @@ type thisData struct {
 }
 
 func (server *Server) boardMadeHandler(s socketio.Conn, msg string) {
-	//log.Debug().Str("service", "BoardMadeHandler").Msgf("Data : %s", msg)
-	//fmt.Println("BoardMadeHandler", msg)
+	sublogger := log.With().Str("service", "boardMadeHandler").Logger()
+
+	//sublogger.Debug().Msgf("Data : %s", msg)
 
 	var dat *thisData
 	if err := json.Unmarshal([]byte(msg), &dat); err != nil {
-		//fmt.Println("BoardMadeHandler", err)
-		panic(fmt.Errorf("JSON UNMARSHAL ERROR %v", err))
+		sublogger.Error().AnErr("JSON marshalling error", err)
+		panic(err)
 	}
 
 	if !server.verify(dat.Player, dat.UserToken) {
@@ -31,14 +31,14 @@ func (server *Server) boardMadeHandler(s socketio.Conn, msg string) {
 		return
 	}
 
-	fmt.Println(dat.ShipPlacement)
+	sublogger.Debug().Msgf("Data : %+v", dat.ShipPlacement)
 
 	gg := server.games[dat.GameID]
 
 	aa := gg.PlayerReady(dat.Player, dat.ShipPlacement)
 
-	fmt.Println(dat.Player, aa.thisPlayerRes)
-	fmt.Println(gg.OtherPlayer(dat.Player), aa.otherPlayerRes)
+	sublogger.Debug().Msgf("User %-10s - Response: %+v", dat.Player, aa.thisPlayerRes)
+	sublogger.Debug().Msgf("User %-10s - Response: %+v", gg.OtherPlayer(dat.Player), aa.otherPlayerRes)
 
 	for _, v := range aa.thisPlayerRes {
 		//fmt.Println("this", v.data)

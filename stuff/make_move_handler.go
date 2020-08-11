@@ -37,7 +37,7 @@ func (server *Server) makeMoveHandler(s socketio.Conn, msg string) {
 
 	aa := gg.MakeMove(dat.Player, dat.Move)
 
-	//fmt.Printf("%+v\n", aa)
+	sublogger.Debug().Msgf("User %-10s - Response: %+v    User %-10s - Response: %+v", dat.Player, aa.thisPlayerRes, gg.OtherPlayer(dat.Player), aa.otherPlayerRes)
 
 	for _, v := range aa.thisPlayerRes {
 		//fmt.Println("this", v.data)

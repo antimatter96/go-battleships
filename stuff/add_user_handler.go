@@ -12,18 +12,17 @@ import (
 func (server *Server) addUserHandler(s socketio.Conn, msg string) {
 	sublogger := log.With().Str("service", "addUserHandler").Logger()
 
-	sublogger.Debug().Msgf("Data : %s", msg)
+	//sublogger.Debug().Msgf("Data : %s", msg)
 
 	var dat map[string]string
 	if err := json.Unmarshal([]byte(msg), &dat); err != nil {
 		sublogger.Error().AnErr("JSON unmarshalling error", err)
 		panic(err)
 	}
-	//fmt.Println(dat)
+	sublogger.Debug().Msgf("Data : %+v", dat)
 
 	m := make(map[string]string)
 	defer func() {
-		//fmt.Println(">>", m, "<<")
 		b, err := json.Marshal(m)
 		if err != nil {
 			sublogger.Error().AnErr("JSON marshalling error", err)
