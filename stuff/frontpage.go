@@ -54,19 +54,23 @@ func CreateFrontpage() {
 
 	fo, err := os.Create("static/index.html")
 	if err != nil {
+		log.Error().AnErr("Cant open file", err)
 		panic(err)
 	}
 
 	defer func() {
 		if err := fo.Close(); err != nil {
+			log.Error().AnErr("Cant close file", err)
 			panic(err)
 		}
 	}()
+
 	w := bufio.NewWriter(fo)
 
 	shortnerTemplate.Execute(w, ts)
 
 	if err = w.Flush(); err != nil {
+		log.Error().AnErr("Cant flush buffer", err)
 		panic(err)
 	}
 
