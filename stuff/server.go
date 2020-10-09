@@ -3,7 +3,6 @@ package stuff
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	socketio "github.com/googollee/go-socket.io"
 )
@@ -18,8 +17,6 @@ type Server struct {
 	queueLock sync.Mutex
 	Queue     []string
 
-	playerIsIn map[string]string
-
 	games map[string]*BattleShips
 	//addUserHandler func()
 }
@@ -31,22 +28,6 @@ func (server *Server) Init() {
 	server.games = make(map[string]*BattleShips)
 
 	server.Queue = make([]string, 0)
-
-	ticker := time.NewTicker(5 * time.Second)
-
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				// for x, y := range server.socketOf {
-				// 	fmt.Println(x, (*y).Context(), (*y).ID())
-				// }
-				// for _, k := range server.Queue {
-				// 	fmt.Println(k)
-				// }
-			}
-		}
-	}()
 
 	server.Server.OnConnect("/", func(s socketio.Conn) error {
 		fmt.Println("connected:", s.ID())

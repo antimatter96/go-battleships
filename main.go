@@ -2,8 +2,9 @@ package main
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 
 	socketio "github.com/googollee/go-socket.io"
 
@@ -12,10 +13,14 @@ import (
 
 func main() {
 	privateKeyPEM, err := ioutil.ReadFile("./private_key.pem")
+	if err != nil {
+		log.Warn().AnErr("Error getting private key", err)
+	}
 
 	server, err := socketio.NewServer(nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().AnErr("Error initialising socket server", err)
+
 	}
 
 	ss := stuff.Server{Key: privateKeyPEM, Server: server}
@@ -23,12 +28,17 @@ func main() {
 
 	stuff.CreateFrontpage()
 
-	go server.Serve()
+	go func() {
+		if errSocket := server.Serve(); errSocket != nil {
+			log.Warn().AnErr("Error in socket server receiving connections", errSocket)
+		}
+	}()
+
 	defer server.Close()
 
 	http.Handle("/socket.io/", server)
 
 	http.Handle("/", http.FileServer(http.Dir("./static")))
-	log.Println("Serving at localhost:8000...")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Info().Msg("Serving at localhost:8000...")
+	log.Fatal().AnErr("Error http server", http.ListenAndServe(":8000", nil))
 }
