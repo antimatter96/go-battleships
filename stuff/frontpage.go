@@ -67,7 +67,9 @@ func CreateFrontpage() {
 
 	w := bufio.NewWriter(fo)
 
-	shortnerTemplate.Execute(w, ts)
+	if err = shortnerTemplate.Execute(w, ts); err != nil {
+		log.Warn().AnErr("Failed to execute template", err)
+	}
 
 	if err = w.Flush(); err != nil {
 		log.Error().AnErr("Cant flush buffer", err)

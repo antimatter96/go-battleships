@@ -160,7 +160,7 @@ $(document).ready(function () {
     }
     boardValid = boardIsValid();
     if (!boardValid) {
-      $('#errorReady').text('Invlid Board');
+      $('#errorReady').text('Invalid Board');
       return;
     }
     lockReady = true;
@@ -499,7 +499,7 @@ $(document).ready(function () {
         }
       } else {
         classInverserShoot(true);
-        $('#errorShoot').text("Invlid Entry");
+        $('#errorShoot').text("Invalid Entry");
       }
     } else {
       classInverserShoot(true);
